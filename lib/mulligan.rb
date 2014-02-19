@@ -1,5 +1,12 @@
 require "mulligan/version"
+require "mulligan/exception"
+require "mulligan/kernel"
 
-module Mulligan
-  # Your code goes here...
+class Exception
+  prepend Mulligan::Exception
 end
+
+class Object
+  prepend Mulligan::Kernel
+end
+
