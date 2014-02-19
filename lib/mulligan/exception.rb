@@ -46,6 +46,10 @@ module Mulligan
       @builder = RestartBuilder.new(&block) unless block.nil?
     end
 
+    def __builder__
+      @builder
+    end
+
     def __set_continuation__(continuation)
       @continuation = continuation
     end
