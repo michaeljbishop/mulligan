@@ -9,8 +9,9 @@ module Mulligan
   #   attr_reader :restart_data
 
     def initialize(*args, &block)
-      __load_builder__(&block)
       return super(*args) if block.nil?
+
+      __load_builder__(&block)
 
       # save off the self of the block that is defining all the restarts
       # it is that binding with which we will need to invoke the actual
@@ -24,8 +25,7 @@ module Mulligan
     end
   
     def restart_exist?(id)
-      data = restarts[id.to_sym]
-      !data.nil?
+      restarts.has_key?(id.to_sym)
     end
   
     def restart(id, *params)
