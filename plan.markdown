@@ -36,7 +36,6 @@ We should be be able to specify restart clauses using a nice, concise language.
 
 Here are some examples:
 
-    should_retry = false
     raise Exception, "Could not do the thing!" do
       restart :ignore do
         # simply doing nothing ignores the error
@@ -44,12 +43,41 @@ Here are some examples:
       restart :replace_entry do |replacement|
         replacement
       end
-      restart :retry do
-        should_retry = true
+    end
+
+
+Be able to catch an exception and add restarts to it before rethrowing it
+-------------------------------------------------------------------------
+We should be able to catch an exception from below, and add our own strategies to it
+
+Here is an example:
+
+    def rethrow
+      should_retry = false
+      inner_call
+    rescue Exception => e
+      e.add_restarts do
+        restart :retry do
+          should_retry = true
+        end
+      end
+      retry if should_retry
+    end
+
+When overriding a restart, should be able to call previous restart (super?)
+-------------------------------------------------------------------------
+
+Here is an example:
+
+    def rethrow
+      inner_call
+    rescue Exception => e
+      e.add_restarts do |super_restarts|
+        restart :fix do
+          super_restarts[:fix].call
+        end
       end
     end
-    retry if should_retry
-
 
 Restarts can have some metadata associated with them
 ----------------------------------------------------
