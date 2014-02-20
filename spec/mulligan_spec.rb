@@ -42,7 +42,7 @@ describe Mulligan do
       expect { outer_test(style){|e|e.recover :no_block} }.to raise_error(Mulligan::ControlException)
     end
     
-    describe "restart options" do
+    describe "recovery data" do
       it "should not return the block" do
         data = nil
         outer_test(style) do |e|
@@ -52,7 +52,16 @@ describe Mulligan do
         expect(data).to be_nil
       end
 
-      it "should pass data created in set_recovery" do
+      it "should not return the continuation" do
+        data = nil
+        outer_test(style) do |e|
+          data = e.recovery_data(:return_param)[:continuation]
+          e.recover(:return_param)
+        end
+        expect(data).to be_nil
+      end
+
+      it "should pass data created in set_restart" do
         data = nil
         outer_test(style) do |e|
           data = e.recovery_data(:return_param)[:data]

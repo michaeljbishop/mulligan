@@ -17,7 +17,7 @@ module Mulligan
     
     def recovery_data(id)
       return nil unless recovery_exist?(id.to_sym)
-      restarts[id.to_sym].dup.reject{|k,v| k == :block}
+      restarts[id.to_sym].dup.reject{|k,v| [:block, :continuation].include? k}
     end
   
     def recover(id, *params)
