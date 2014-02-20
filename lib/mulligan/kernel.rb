@@ -1,11 +1,16 @@
 module Mulligan
   module Kernel
     def raise(*args, &block)
-      super(*args)
+      super
     rescue Exception => e
-      e.__send__(:__load_builder__, &block) unless block.nil?
-      super(e) if e.__send__(:__builder__).nil?
-      callcc{|c| e.send(:__set_continuation__, c); super(e)}
+      block.call(e) unless block.nil?
+
+      # only use callcc if there are restarts otherwise re-raise it
+      super(e) if e.send(:restarts).empty?
+      callcc do |c|
+        e.send(:__set_continuation__, c)
+        super(e)
+      end
     end
   end
 end
