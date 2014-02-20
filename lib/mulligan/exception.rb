@@ -6,22 +6,22 @@ module Mulligan
 
   module Exception
 
-    def set_restart(id, options={}, &block)
+    def set_recovery(id, options={}, &block)
       return if block.nil?
       restarts[id.to_sym] = options.merge(:block => block)
     end
     
-    def restart_exist?(id)
+    def recovery_exist?(id)
       restarts.has_key?(id.to_sym)
     end
     
-    def restart_options(id)
-      return nil unless restart_exist?(id.to_sym)
+    def recovery_data(id)
+      return nil unless recovery_exist?(id.to_sym)
       restarts[id.to_sym].dup.reject{|k,v| k == :block}
     end
   
-    def restart_invoke(id, *params)
-      raise ControlException unless restart_exist?(id.to_sym)
+    def recover(id, *params)
+      raise ControlException unless recovery_exist?(id.to_sym)
       data = restarts[id.to_sym]
       if data[:continuation].nil?
         $stderr.puts "Cannot invoke restart #{id}. Must first raise this exception (#self)"
