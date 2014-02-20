@@ -15,7 +15,7 @@ module Mulligan
       restarts.has_key?(id.to_sym)
     end
     
-    def recovery_data(id)
+    def recovery_options(id)
       return nil unless recovery_exist?(id.to_sym)
       restarts[id.to_sym].dup.reject{|k,v| [:block, :continuation].include? k}
     end
