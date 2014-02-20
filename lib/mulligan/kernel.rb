@@ -1,5 +1,13 @@
 module Mulligan
   module Kernel
+
+    # Raises an Exception.
+    # The Exception that is either passed in or generated is yielded to the block
+    # where you can specify recoveries on it.
+    # 
+    # @param args the same args you would pass to the normal Kernel#raise
+    # For a block {|e| ... }
+    # @yield [e] Passes the exception to the block.
     def raise(*args, &block)
       super
     rescue Exception => e
