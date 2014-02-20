@@ -41,18 +41,53 @@ describe Mulligan do
     it "should ignore setting a restart when passed no block" do
       expect { outer_test(style){|e|e.restart_invoke :no_block} }.to raise_error(Mulligan::ControlException)
     end
+    
+    describe "restart options" do
+      it "should not return the block" do
+        data = nil
+        outer_test(style) do |e|
+          data = e.restart_options(:return_param)[:block]
+          e.restart_invoke(:return_param)
+        end
+        expect(data).to be_nil
+      end
 
+      it "should pass data created in set_restart" do
+        data = nil
+        outer_test(style) do |e|
+          data = e.restart_options(:return_param)[:data]
+          e.restart_invoke(:return_param)
+        end
+        expect(data).to be(5)
+      end
+
+      it "should be read-only" do
+        result = outer_test(style) do |e|
+          e.restart_options(:return_param)[:new_entry] = 5
+          e.restart_invoke(:return_param, e)
+        end
+        expect(result.restart_options(:return_param)[:new_entry]).to be_nil
+      end
+    end
+    
     it "should support overriding a restart and calling the inherited restart"
   end
 
   context Exception do
     let(:style){:manual}
     it_behaves_like "a Mulligan Exception"
+
+    it "shouldn't fail when calling a restart before raising" do
+      t = Exception.new("Test Exception")
+      t.set_restart(:ignore) {|p|}
+      expect{t.restart_invoke(:ignore)}.to_not raise_error
+    end
   end
 
   context "Kernel#raise" do
     let(:style){:raise}
     it_behaves_like "a Mulligan Exception"
+
     it "should propgate restarts when raising a pre-existing exception" do
       t = Exception.new("Test Exception")
       t.set_restart(:ignore) {|p|}
@@ -73,7 +108,7 @@ def core_test(style)
   raise t do |e|
     e.set_restart(:ignore){|p|p}
     e.set_restart(:no_block)
-    e.set_restart(:return_param){|p|p}
+    e.set_restart(:return_param, data: 5){|p|p}
     e.set_restart(:return_param2){|p|p}
   end
 end
