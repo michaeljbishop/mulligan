@@ -52,6 +52,15 @@ describe Mulligan do
         expect(data).to be_nil
       end
 
+      it "should not return the continuation" do
+        data = nil
+        outer_test(style) do |e|
+          data = e.restart_options(:return_param)[:continuation]
+          e.restart_invoke(:return_param)
+        end
+        expect(data).to be_nil
+      end
+
       it "should pass data created in set_restart" do
         data = nil
         outer_test(style) do |e|

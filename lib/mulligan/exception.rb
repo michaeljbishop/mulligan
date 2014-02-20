@@ -17,7 +17,7 @@ module Mulligan
     
     def restart_options(id)
       return nil unless restart_exist?(id.to_sym)
-      restarts[id.to_sym].dup.reject{|k,v| k == :block}
+      restarts[id.to_sym].dup.reject{|k,v| [:block, :continuation].include? k}
     end
   
     def restart_invoke(id, *params)
