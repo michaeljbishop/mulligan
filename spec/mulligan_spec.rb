@@ -42,6 +42,20 @@ describe Mulligan do
       expect { outer_test(style){|e|e.recover :no_block} }.to raise_error(Mulligan::ControlException)
     end
     
+    it "should retrieve the network request without an exception" do
+      @count_of_calls_before_failure = 2
+
+      result = nil
+      expect { result = do_network_task }.to_not raise_error
+      expect(result).to eq(
+        {
+          :users    => "json_data",
+          :posts    => "json_data",
+          :comments => "json_data"
+        }
+      )
+    end
+    
     describe "recovery options" do
       it "should not return the block" do
         data = nil
@@ -149,4 +163,76 @@ def outer_test(style = :manual, &handler)
   inner_test(style)
   rescue Exception => e
     handler.call(e)
+end
+
+
+
+#===========================
+#   SIMULATE LOGIN EXPIRE
+#===========================
+
+# simple method that logs the user in
+
+@credentials = "password"
+def login
+  @credentials = "password"
+  @count_of_calls_before_failure = 2
+end
+
+
+class CredentialsExpiredException < Exception ; end
+
+# at a low level, we will just raise a CredentialsExpiredException if that's
+# the response we get from the server
+def rest_get(url)
+  # simulate that the credentials expire after a certain period
+  @credentials = nil if @count_of_calls_before_failure <= 0
+  @count_of_calls_before_failure = @count_of_calls_before_failure - 1
+
+  # Simulate getting a response from the server indicating our credentials
+  # have expired.
+  raise(CredentialsExpiredException, "Credentials expired") if @credentials != "password"
+
+  # Canned data to return
+  "json_data"
+end
+
+# this takes a resource, makes an URL for that and returns the raw data provided
+# from rest_get.
+# It also specifies a "retry" recovery in case the credentials can be restored by
+# code at a higher level
+def request_resource(name)
+
+  should_retry = false
+  url = "http://site.com/#{name}"
+  rest_get(url)
+  
+  rescue CredentialsExpiredException => e
+    # re-raise the exception but add a recovery so if they fix the credentials
+    # we can try again
+    raise (e) do |e|
+      e.set_recovery(:retry){|e| should_retry = true}
+    end
+    retry if should_retry
+end
+
+# This is the method that demonstrates how it all comes together.
+# We can handle all credential failures from a very high-level.
+# Because #request_resource offers a retry recovery, any code that calls
+# #request_resource doesn't have to worry about the state of the user's credentials.
+# Those exceptions will be thrown and the handling of them will at a very high-level
+# of abstraction, yet, after they are handled, the program will continue as if the
+# exception hadn't been thrown to begin with.
+def do_network_task
+  {
+    :users    => request_resource("users"),   # This one should work
+    :posts    => request_resource("posts"),   # This one should work
+    :comments => request_resource("comments") # This one should fail
+  }
+  
+  # Here, we handle any requests where credentials fail and we re-login
+  # then we ask to retry the same query
+rescue CredentialsExpiredException => e
+  login
+  e.recover :retry
 end
