@@ -105,3 +105,17 @@ I'm not sure if this is totally needed and think it's a separate item, *but* her
         @restart_data = options[:restart_data]
       end
     end
+
+
+Smalltalk has some built-in strategies
+--------------------------------------
+- #exit, #resume (like ignore, it means just continue as if it hadn't been thrown)
+- #outer (reraise with the same strategy identifier except that now returns to this point)
+- #pass (reraise the exception)
+- #resignalAs:. Raise a different class of exception in place of the current exception, as if the new class of exception had been raised in the first place.
+- #retry (note: not sure how we can make this a built-in)The try-block associated with the handler (i.e. the receiver of the #on:do: to which it is the last argument) is re-evaluated. Of course it is pointless retrying if the same exception will be raised, and this is an easy way to create an infinite loop (though Ctrl+Break should
+#retryUsing: Substitute the argument as the new try block, and #retry. This has particular application for operations which have fast implementations for commonly used execution paths, and slower implementations for less common usages. get you out of trouble). - Super-interesting. Wonder if we might try it.
+
+Dylan has a way of attaching a standard set of recoveries to a given Exception class
+------------------------------------------------------------------------------------
+So a given Exception class would have a documented set of recoveries (they refer to it as a protocol)
