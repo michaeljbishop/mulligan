@@ -83,7 +83,8 @@ def post_resource(object)
   ... assemble url and data...
   http_post(url, data)
   rescue Exception => e
-    retry if raise(e){|e|e.set_recovery(:retry){true}}
+    recovery, result = raise(e){|e|e.set_recovery(:retry){}}
+    retry if recovery == :retry
 end
 
 def save_resources
@@ -120,15 +121,16 @@ You've always known he (or she) knew Lisp and now you have something to ask him 
 
 - You can pass parameters to `Exception#recover`. The first parameter is always the id of the recovery. The rest will be passed directly to the recovery block.
 - You can pass an options hash to the `rescue` clause that is attached to your recovery. This is handy if you want to attach extra data about the recovery or the circumstances in which it is being raised. Pass them as the second parameter in `Exception#set_recovery`. You can retrieve them with `Exception#recovery_options`. Reserved keys are `:summary`, and `:discussion`
-- `Kernel#raise` now has a return value! The return value from the recovery block is returned from the `#raise` that raised it. So you can do nifty things like this:
+- `Kernel#raise` now has a return value! It is an array with two items. The first is the id of the recovery. The second is return value from the recovery block. So you can do nifty things like this:
 
-```ruby
-begin
-  ... some code ...
-rescue Exception => e
-  retry if raise(e){|e|e.set_recovery(:retry){true}}
-end
-```
+    ```ruby
+    begin
+      ... some code ...
+    rescue Exception => e
+      recovery, result = raise(e){|e|e.set_recovery(:retry){}}
+      retry if recovery == :retry
+    end
+    ```
 
 ### #callcc
 
