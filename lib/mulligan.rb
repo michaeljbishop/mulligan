@@ -1,9 +1,9 @@
 require "mulligan/version"
-require "mulligan/exception"
+require "mulligan/condition"
 require "mulligan/kernel"
 
 class Exception
-  prepend Mulligan::Exception
+  prepend Mulligan::Condition
 end
 
 class Object
