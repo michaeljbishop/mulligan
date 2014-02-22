@@ -5,7 +5,7 @@ module Mulligan
   # An exception that is thrown when invoking a non-existent recovery.
   class ControlException < Exception ; end
 
-  module Exception
+  module Condition
 
     # Creates or replaces a recovery strategy.
     # 
