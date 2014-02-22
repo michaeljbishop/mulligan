@@ -1,6 +1,6 @@
 # Mulligan
 
-"...a stroke that is replayed from the spot of the previous stroke without penalty, due to an errant shot made on the previous stroke. The result is, as the hole is played and scored, as if the first errant shot had never been made." -- [Wikipedia](http://en.wikipedia.org/wiki/Mulligan_(games)#Mulligan_in_golf)
+"In golf,...a stroke that is replayed from the spot of the previous stroke without penalty, due to an errant shot made on the previous stroke. The result is, as the hole is played and scored, as if the first errant shot had never been made." -- [Wikipedia](http://en.wikipedia.org/wiki/Mulligan_(games)#Mulligan_in_golf)
 
 ## Usage
 
@@ -11,47 +11,49 @@ Here's a very simple contrived example:
  1 require 'mulligan'
  2 
  3 def method_that_raises
- 4   raise "You can ignore this" do |e|
- 5     e.set_recovery :ignore do
- 6       puts "IGNORING"
- 7     end
- 8   end
- 9 end
-10
-11 def calling_method
-12   method_that_raises
-13   "SUCCESS"
-14   rescue Exception => e
-15     puts "RESCUED"
-16     e.recover :ignore
-17     puts "HANDLED"
-18 end
+ 4   puts "RAISING"
+ 5   raise "You can ignore this" do |e|
+ 6     e.set_recovery :ignore do
+ 7       puts "IGNORING"
+ 8     end
+ 9   end
+10   puts "AFTER RAISE"
+11 end
+12
+13 def calling_method
+14   method_that_raises
+15   "SUCCESS"
+16   rescue Exception => e
+17     puts "RESCUED"
+18     e.recover :ignore
+19     puts "HANDLED"
+20 end
 ```
 
 Running this at the REPL shows:
 
 ```
 2.0.0-p353 :009 > calling_method
+RAISING
 RESCUED
 IGNORING
+AFTER RAISE
  => "SUCCESS" 
 ```
 
-### Um... what the hell just happened?
-
-Shouldn't we see "HANDLED" in that output?
+### Yeah... wait, shouldn't we see "HANDLED" in that output?!
 
 Here's what happened in detail:
 
-1. `#method_that_raises` is called from `#calling_method` (line 12)
-2. `#method_that_raises` raises an exception *but* before it is raised, a "recovery" can be added to the exception (line 5) in the block passed to `#raise`. (The exception is the parameter passed in the `#raise` block)
-3. The exception is then raised and rescued (line 14)
-4. The "recovery" on the exception is called (line 16) which executes the statement in the recovery block (defined on line 6).
-5. Since the exception has recovered, control taks us back to the point *immediately after the block passed to* `#raise` (line 9), continuing as if `#raise` hadn't been called in the first place.
-6. The method exits and we return to line 13 as if we never saw the exception.
-7. We exit the method because there's no exception to rescue (line 18)
+1. `#method_that_raises` is called from `#calling_method` (line 14)
+2. `#method_that_raises` raises an exception *but* before it is raised, a "recovery" can be added to the exception (line 6) in the block passed to `#raise`. (The exception is the parameter 'e' passed to the `#raise` block)
+3. The exception is then raised (line 5) and rescued (line 16)
+4. The "recovery" on the exception is called (line 18) which executes the statement in the recovery block (defined on line 7).
+5. Since the exception has recovered, control taks us back to the point *immediately after the block passed to* `#raise` (line 10), continuing as if `#raise` hadn't been called in the first place.
+6. The method exits (line 11) and we return to line 15 as if we never saw the exception.
+7. We exit the method because there's no exception to rescue (line 20). The last value in the function was "SUCCESS" so that is returned.
 
-## That's pretty cool... aaaaaaaaand whydoicare?
+### I see what you did. That's cool, but why should I care?
 
 You should care because your `rescue` statement is likely to be far from the `raise` in your program's execution and the further away it is, the harder it is to fix the error intelligently. It's even harder if that `raise` comes from a library you are calling.
 
@@ -66,12 +68,12 @@ Find your favorite chair and read these:
 
 ### So I'm convinced this is a good thing, but what can I do with it?
 
-Here are some of use cases:
+Here are some use cases:
 
 #### Fixing network connection errors
 
 ```ruby
-def rest_post(url, data)
+def http_post(url, data)
   ... networking code...
   raise CredentialsExpiredException if response == 401
   raise ConnectionFailedException if response == 404
@@ -79,7 +81,7 @@ end
 
 def post_resource(object)
   ... assemble url and data...
-  rest_post(url, data)
+  http_post(url, data)
   rescue Exception => e
     retry if raise(e){|e|e.set_recovery(:retry){true}}
 end
@@ -114,7 +116,7 @@ BTW, Here's your second chance to read [Beyond Exception Handling: Conditions an
 
 You've always known he (or she) knew Lisp and now you have something to ask him about.
 
-## Some notes about the Ruby implementation
+## Some Notes About the Ruby Implementation
 
 - You can pass parameters to `Exception#recover`. The first parameter is always the id of the recovery. The rest will be passed directly to the recovery block.
 - You can pass an options hash to the `rescue` clause that is attached to your recovery. This is handy if you want to attach extra data about the recovery or the circumstances in which it is being raised. Pass them as the second parameter in `Exception#set_recovery`. You can retrieve them with `Exception#recovery_options`. Reserved keys are `:summary`, and `:discussion`
