@@ -6,8 +6,8 @@ module Mulligan
     # where you can specify recoveries on it.
     # 
     # @param args the same args you would pass to the normal Kernel#raise
-    # For a block {|e| ... }
-    # @yield [e] Passes the exception to the block.
+    # @yield [e] Passes the exception-to-be-raised to the block.
+    # @return [Array] An array with two items: the recovery id, and the value of recovery block
     def raise(*args, &block)
       super
     rescue Exception => e

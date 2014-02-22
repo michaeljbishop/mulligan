@@ -50,7 +50,7 @@ module Mulligan
         $stderr.puts "Cannot invoke restart #{id}. Must first raise this exception (#self)"
         return
       end
-      data[:continuation].call(data[:block].call(*params))
+      data[:continuation].call([id, data[:block].call(*params)])
     end
   
   private

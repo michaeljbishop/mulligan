@@ -5,7 +5,7 @@ describe Mulligan do
     Mulligan::VERSION.should_not be_nil
   end
 
-  shared_examples "a Mulligan Exception" do
+  shared_examples "a Mulligan Condition" do
     it 'should propagate errors' do
       expect { outer_test(style) }.to raise_error
     end
@@ -98,7 +98,7 @@ describe Mulligan do
 
   context Exception do
     let(:style){:manual}
-    it_behaves_like "a Mulligan Exception"
+    it_behaves_like "a Mulligan Condition"
 
     it "shouldn't fail when recovering before raising" do
       t = Exception.new("Test Exception")
@@ -109,7 +109,7 @@ describe Mulligan do
 
   context "Kernel#raise" do
     let(:style){:raise}
-    it_behaves_like "a Mulligan Exception"
+    it_behaves_like "a Mulligan Condition"
 
     it "should propgate recoveries when raising a pre-existing exception" do
       t = Exception.new("Test Exception")
@@ -133,26 +133,26 @@ end
 def core_test(style)
   t =  "Test Exception"
   t = Exception.new("Test Exception") if style == :manual
-  raise t do |e|
+  recovery, result = raise t do |e|
     e.set_recovery(:ignore){|p|p}
     e.set_recovery(:no_block)
     e.set_recovery(:return_param, data: 5){|p|p}
     e.set_recovery(:return_param2){|p|p}
   end
+  result
 end
 
 
 def inner_test(style = :manual)
   core_test(style)
   rescue Exception => e
-    should_retry = false
-    result = raise(e) do |e|
-      e.set_recovery(:retry){should_retry = true}
+    recovery, result = raise(e) do |e|
+      e.set_recovery(:retry){}
       # here we add 10 so we can ensure we are in fact, overriding
       # the behavior for the same recovery as defined in core_test
       e.set_recovery(:return_param2){|p|p+10}
     end
-    retry if should_retry
+    retry if recovery == :retry
     # here we add 10 so we can differentiate retries in `inner_test` from `core_test`
     # we know we are in inner_test if our result is plus 10
     result + 10
@@ -208,9 +208,11 @@ def request_resource(name)
   rescue CredentialsExpiredException => e
     # re-raise the exception but add a recovery so if they fix the credentials
     # we can try again
-    retry if raise (e) do |e|
+    recovery, result = raise (e) do |e|
       e.set_recovery(:retry){true}
     end
+    retry if recovery == :retry
+    result
 end
 
 # This is the method that demonstrates how it all comes together.
