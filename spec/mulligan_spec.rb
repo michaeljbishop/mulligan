@@ -202,18 +202,15 @@ end
 # It also specifies a "retry" recovery in case the credentials can be restored by
 # code at a higher level
 def request_resource(name)
-
-  should_retry = false
   url = "http://site.com/#{name}"
   rest_get(url)
   
   rescue CredentialsExpiredException => e
     # re-raise the exception but add a recovery so if they fix the credentials
     # we can try again
-    raise (e) do |e|
-      e.set_recovery(:retry){|e| should_retry = true}
+    retry if raise (e) do |e|
+      e.set_recovery(:retry){true}
     end
-    retry if should_retry
 end
 
 # This is the method that demonstrates how it all comes together.
