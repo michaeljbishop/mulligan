@@ -133,26 +133,25 @@ end
 def core_test(style)
   t =  "Test Exception"
   t = Exception.new("Test Exception") if style == :manual
-  recovery, result = raise t do |e|
+  raise t do |e|
     e.set_recovery(:ignore){|p|p}
     e.set_recovery(:no_block)
     e.set_recovery(:return_param, data: 5){|p|p}
     e.set_recovery(:return_param2){|p|p}
   end
-  result
 end
 
 
 def inner_test(style = :manual)
   core_test(style)
   rescue Exception => e
-    recovery, result = raise(e) do |e|
+    result = raise(e) do |e|
       e.set_recovery(:retry){}
       # here we add 10 so we can ensure we are in fact, overriding
       # the behavior for the same recovery as defined in core_test
       e.set_recovery(:return_param2){|p|p+10}
     end
-    retry if recovery == :retry
+    retry if last_recovery == :retry
     # here we add 10 so we can differentiate retries in `inner_test` from `core_test`
     # we know we are in inner_test if our result is plus 10
     result + 10
@@ -208,10 +207,10 @@ def request_resource(name)
   rescue CredentialsExpiredException => e
     # re-raise the exception but add a recovery so if they fix the credentials
     # we can try again
-    recovery, result = raise (e) do |e|
+    raise (e) do |e|
       e.set_recovery(:retry){true}
     end
-    retry if recovery == :retry
+    retry if last_recovery == :retry
     result
 end
 

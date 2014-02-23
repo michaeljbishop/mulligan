@@ -20,5 +20,9 @@ module Mulligan
         super(e)
       end
     end
+    
+    def last_recovery
+      Thread.current[:__last_recovery__]
+    end
   end
 end
