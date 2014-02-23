@@ -7,7 +7,7 @@ module Mulligan
     # 
     # @param args the same args you would pass to the normal Kernel#raise
     # @yield [e] Passes the exception-to-be-raised to the block.
-    # @return [Array] An array with two items: the recovery id, and the value of recovery block
+    # @return The value returned from the invoked recovery block.
     def raise(*args, &block)
       super
     rescue Exception => e
@@ -21,6 +21,8 @@ module Mulligan
       end
     end
     
+    # Returns the identifier for the last recovery invoked in this thread.
+    # @return [Symbol] The identifier of the last recovery invoked in this thread.
     def last_recovery
       Thread.current[:__last_recovery__]
     end
