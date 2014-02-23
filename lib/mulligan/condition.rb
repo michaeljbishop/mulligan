@@ -48,7 +48,7 @@ module Mulligan
       raise ControlException unless recovery_exist?(id.to_sym)
       data = restarts[id.to_sym]
       if data[:continuation].nil?
-        $stderr.puts "Cannot invoke restart #{id}. Must first raise this exception (#self)"
+        $stderr.puts "Cannot invoke restart #{id}. Must first raise this exception: '#{self.inspect}'"
         return
       end
       Thread.current[:__last_recovery__] = id
