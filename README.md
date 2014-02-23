@@ -53,7 +53,7 @@ Here's what happened in detail:
 6. The method exits (line 11) and we return to line 15 as if we never saw the exception.
 7. We exit the method because there's no exception to rescue (line 20). The last value in the function was "SUCCESS" so that is returned.
 
-### I see what you did. That's cool, but why should I care?
+### I see what you did there. That's cool, but why should I care?
 
 You should care because your `rescue` statement is likely to be far from the `raise` in your program's execution and the further away it is, the harder it is to fix the error intelligently. It's even harder if that `raise` comes from a library you are calling.
 
@@ -66,7 +66,7 @@ Find your favorite chair and read these:
 - [Dylan Reference Manual - Conditions - Background](http://opendylan.org/books/drm/Conditions_Background)
 - [Beyond Exception Handling: Conditions and Restarts](http://www.gigamonkeys.com/book/beyond-exception-handling-conditions-and-restarts.html) (keep in mind the "restarts" are what we are calling "recoveries").
 
-### So I'm convinced this is a good thing, but what can I do with it?
+### This *seems* like a good thing, but what can I do with it?
 
 Here are some use cases:
 
@@ -143,11 +143,11 @@ However, to make that happen, I had to use the `#callcc` method. I'm not complet
 This is a superficial requirement. It's only because I'm using the `prepend` keyword to open up the `Exception` class and `Kernel` Module. There's an [issue for this](https://github.com/michaeljbishop/mulligan/issues/1).
 
 
-### "Recovery"?
+### "Recovery"? What's wrong with "Restart"?
 
 I had to make a hard choice about naming the thing that allows an exception to be recovered from. "Restart" is the word used in Lisp, but because it is used as a verb and as a noun, it makes it hard to know what a Ruby method named `#restart` would do. Does it return a "restart" or does it execute a restart?
 
-Changing the name to a noun clears up that confusion (though arguably adds a new one for those coming from languages where the "restart" name is entrenched).
+Changing the name to a noun subtracts that confusion (though arguably adds some back for those coming from languages where the "restart" name is entrenched).
 
 ## Influences
 - [Beyond Exception Handling: Conditions and Restarts](http://www.gigamonkeys.com/book/beyond-exception-handling-conditions-and-restarts.html) -- (from [Practical Common Lisp](http://www.gigamonkeys.com/book/))
