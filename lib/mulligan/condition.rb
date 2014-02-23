@@ -44,13 +44,15 @@ module Mulligan
     # @param params any additional parameters you want to pass to the recovery block
     # @return This doesn't actually matter because you can't retrieve it
     def recover(id, *params)
+      Thread.current[:__last_recovery__] = nil
       raise ControlException unless recovery_exist?(id.to_sym)
       data = restarts[id.to_sym]
       if data[:continuation].nil?
         $stderr.puts "Cannot invoke restart #{id}. Must first raise this exception (#self)"
         return
       end
-      data[:continuation].call([id, data[:block].call(*params)])
+      Thread.current[:__last_recovery__] = id
+      data[:continuation].call(data[:block].call(*params))
     end
   
   private

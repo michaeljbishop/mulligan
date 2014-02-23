@@ -119,3 +119,11 @@ Smalltalk has some built-in strategies
 Dylan has a way of attaching a standard set of recoveries to a given Exception class
 ------------------------------------------------------------------------------------
 So a given Exception class would have a documented set of recoveries (they refer to it as a protocol)
+
+You can use a global variable to reference the last restart taken
+-----------------------------------------------------------------
+One of the difficult problems to solve is, what should #raise return? Currently, it returns the array of the restart chosen and the result of the restart block. I really like that we can get the result of the restart block, but I really don't like that methods written with raise that are ignored suddenly implicitly return an array. Yet to implement a property retry, it's important to know which restart was executed. I'd like the cleanliness of #raise returning only the return value of the block and the cleanliness of being able to know which restart was chosen.
+
+One solution is to have #raise return the value straight through and use a thread-local global variable that holds the id of the last invoked restart. So far, the only use case I've seen that requires that information is to do a retry inside a rescue clause.
+
+
