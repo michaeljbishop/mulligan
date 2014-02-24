@@ -29,7 +29,7 @@ module Mulligan
     # 
     # @param [String or Symbol] id the key for the recovery
     # @return [Boolean] whether or not a recovery exists for this id
-    def recovery_exist?(id)
+    def has_recovery?(id)
       recoveries.has_key?(id.to_sym)
     end
     
@@ -38,8 +38,15 @@ module Mulligan
     # @param [String or Symbol] id the key for the recovery
     # @return [Hash] The options set on this recovery
     def recovery_options(id)
-      return nil unless recovery_exist?(id.to_sym)
+      return nil unless has_recovery?(id.to_sym)
       recoveries[id.to_sym].dup.reject{|k,v| [:block, :continuation].include? k}
+    end
+  
+    # Retrieves all the identifiers for available recoveries
+    # 
+    # @return [Enumerable] The identifiers for all the recoveries
+    def recovery_identifiers
+      recoveries.keys
     end
   
     # Executes the recovery.
@@ -52,7 +59,7 @@ module Mulligan
     # @return This doesn't actually matter because you can't retrieve it
     def recover(id, *params)
       Thread.current[:__last_recovery__] = nil
-      raise ControlException unless recovery_exist?(id.to_sym)
+      raise ControlException unless has_recovery?(id.to_sym)
       data = recoveries[id.to_sym]
       if data[:continuation].nil?
         $stderr.puts "Cannot invoke restart #{id}. Must first raise this exception: '#{self.inspect}'"

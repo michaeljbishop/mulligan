@@ -11,11 +11,15 @@ describe Mulligan do
     end
 
     it 'should correctly report missing strategies' do
-      outer_test(style){|e|e.recovery_exist?(:aaa)}.should be_false
+      outer_test(style){|e|e.has_recovery?(:aaa)}.should be_false
     end
 
     it 'should correctly report included strategies' do
-      outer_test(style){|e|e.recovery_exist?(:ignore)}.should be_true
+      outer_test(style){|e|e.has_recovery?(:ignore)}.should be_true
+    end
+
+    it 'should correctly report the list of recoveries' do
+      outer_test(style){|e|e.recovery_identifiers}.should == [:ignore, :return_param, :return_all_params, :return_param2, :retry]
     end
 
     it 'should raise a control exception when invoking a non-existent recovery' do
@@ -134,7 +138,7 @@ describe Mulligan do
           e.set_recovery(:return_param){|p|p}
         end
       rescue Exception => e
-        expect(e.recovery_exist?:ignore).to be_true
+        expect(e.has_recovery?:ignore).to be_true
       end
     end
   end
