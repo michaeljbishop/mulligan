@@ -120,7 +120,8 @@ You've always known he (or she) knew Lisp and now you have something to ask him 
 ## Some Notes About the Ruby Implementation
 ### Methods
 #### Kernel#raise
-`Kernel#raise` now has a return value! It is the return value from the recovery block. `Kernel#raise` also yields the exception to a block. It does this since it's pretty common to have `Kernel#raise` create an exception for you and without this, you couldn't otherwise attach recoveries.
+1. `Kernel#raise` now has a return value! It is the value returned from the recovery block.
+2. `Kernel#raise` also yields the exception to a block. It does this since it's pretty common to have `Kernel#raise` create an exception for you and without this, you couldn't otherwise attach recoveries.
 
 ```ruby
 def test
@@ -167,16 +168,20 @@ returns
 You can pass an options hash to the `rescue` clause that is attached to your recovery. This is handy if you want to attach extra data about the recovery or the circumstances in which it is being raised. Pass them as the second parameter in `Exception#set_recovery`. You can retrieve them with `Exception#recovery_options`. Reserved keys are `:summary`, and `:discussion`
 ```ruby
   raise "Test" do |e|
-    discussion = "Replaces the misparsed entry with one you specify."
-    e.set_recovery(:replace_value, :discussion => discussion){|p|p}
+    summary = "Replaces the misparsed entry with one you specify."
+    e.set_recovery(:replace_value, :summary => summary){|p|p}
   end
 ```
 
-To demonstrate this, here's a rescue statement. The rescue simply prints out the description (which is not really useful as a rescue statement) but it's an example of how a REPL might output to the user a list of recoveries to choose from and the details of what they do.
+To demonstrate this, here's a rescue statement. The rescue simply prints out the description which is not really useful as a rescue statement, but it's an example of how a REPL might output to the user a list of recoveries to choose from and the details of what they do.
 
 ```
 rescue MisparsedEntryException => e
-  $stderr.puts e.recovery_options(:replace_value)[:discussion]
+  $stderr.puts "Choose a recovery:"
+  e.recovery_identifiers.each do |id|
+    $stderr.puts "  #{id}: - #{e.recovery_options(id)[:summary]}"
+  end
+  ... read choice and execute ...
 ```
 
 #### Kernel#last_recovery
@@ -191,7 +196,7 @@ rescue Exception => e
 end
 ```
 
-### #callcc
+### Mulliigan uses #callcc
 
 There is more than one way to do this. In the end, I wanted something that would fit very naturally into Ruby's existing Exception mechanism, yet offer as much of the benefits of Lisp's "restart" as I could.
 
