@@ -31,6 +31,12 @@ describe Mulligan do
       result.should be(5)
     end
 
+    it 'should return all parameters sent when invoking the return_all_params recovery' do
+      result1, result2 = outer_test(style){|e|e.recover(:return_all_params, 5, 6)}
+      result1.should eq(5)
+      result2.should eq(6)
+    end
+
     context "and follows the continutation to the correct raise" do
       it 'should return the parameter sent when invoking the return_param recovery' do
         result = outer_test(style){|e|e.recover(:return_param2, 5)}
@@ -145,7 +151,8 @@ def core_test(style)
   raise t do |e|
     e.set_recovery(:ignore){|p|p}
     e.set_recovery(:no_block)
-    e.set_recovery(:return_param, data: 5, summary:"Passes the parameter sent in as the value of the block."){|p|p}
+    e.set_recovery(:return_param, data: 5, summary: "Passes the parameter sent in as the value of the block."){|p|p}
+    e.set_recovery(:return_all_params){|*p|next *p}
     e.set_recovery(:return_param2){|p|p}
   end
 end
