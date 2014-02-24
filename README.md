@@ -167,15 +167,15 @@ returns
 #### Your recovery can attach data to be read by the rescue clause
 You can pass an options hash to the `rescue` clause that is attached to your recovery. This is handy if you want to attach extra data about the recovery or the circumstances in which it is being raised. Pass them as the second parameter in `Exception#set_recovery`. You can retrieve them with `Exception#recovery_options`. Reserved keys are `:summary`, and `:discussion`
 ```ruby
-  raise "Test" do |e|
-    summary = "Replaces the misparsed entry with one you specify."
-    e.set_recovery(:replace_value, :summary => summary){|p|p}
-  end
+raise "Test" do |e|
+  summary = "Replaces the misparsed entry with one you specify."
+  e.set_recovery(:replace_value, :summary => summary){|p|p}
+end
 ```
 
 To demonstrate this, here's a rescue statement. The rescue simply prints out the description which is not really useful as a rescue statement, but it's an example of how a REPL might output to the user a list of recoveries to choose from and the details of what they do.
 
-```
+```ruby
 rescue MisparsedEntryException => e
   $stderr.puts "Choose a recovery:"
   e.recovery_identifiers.each do |id|
