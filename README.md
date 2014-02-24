@@ -118,28 +118,30 @@ BTW, Here's your second chance to read [Beyond Exception Handling: Conditions an
 You've always known he (or she) knew Lisp and now you have something to ask him about.
 
 ## Some Notes About the Ruby Implementation
-### Kernel#raise
-`Kernel#raise` now has a return value! It is the return value from the recovery block.
-  ```ruby
-  def test
-    # (result is explicit for this example)
-    result = raise "Test" do |e|
-      e.set_recovery(:test_return){"hello"}
-    end
-    result
-  rescue Exception => e
-    e.recover :test_return
+### Methods
+#### Kernel#raise
+`Kernel#raise` now has a return value! It is the return value from the recovery block. `Kernel#raise` also yields the exception to a block. It does this since it's pretty common to have `Kernel#raise` create an exception for you and without this, you couldn't otherwise attach recoveries.
+
+```ruby
+def test
+  # (result is explicit for this example)
+  result = raise "Test" do |e|              # yields Exception to the block
+    e.set_recovery(:test_return){"hello"}   # recovery block returns a string
   end
-  ```
+  result
+rescue Exception => e
+  e.recover :test_return
+end
+```
 
-  returns 
+returns 
 
-  ```
-  2.0.0-p353 :012 > test
-   => "hello" 
-  ```
+```
+2.0.0-p353 :012 > test
+ => "hello" 
+```
 
-### You can pass parameters to Condition#recover
+#### You can pass parameters to Exception#recover
 The first parameter is always the id of the recovery. The rest will be passed directly to the recovery block. Building on the above example:
 
 ```ruby
@@ -161,8 +163,8 @@ returns
  => 5
 ```
 
-### Your recovery can attach data to be read by the rescue clause
-You can pass an options hash to the `rescue` clause that is attached to your recovery. This is handy if you want to attach extra data about the recovery or the circumstances in which it is being raised. Pass them as the second parameter in `Condition#set_recovery`. You can retrieve them with `Condition#recovery_options`. Reserved keys are `:summary`, and `:discussion`
+#### Your recovery can attach data to be read by the rescue clause
+You can pass an options hash to the `rescue` clause that is attached to your recovery. This is handy if you want to attach extra data about the recovery or the circumstances in which it is being raised. Pass them as the second parameter in `Exception#set_recovery`. You can retrieve them with `Exception#recovery_options`. Reserved keys are `:summary`, and `:discussion`
 ```ruby
   raise "Test" do |e|
     discussion = "Replaces the misparsed entry with one you specify."
@@ -177,7 +179,7 @@ rescue MisparsedEntryException => e
   $stderr.puts e.recovery_options(:replace_value)[:discussion]
 ```
 
-### Kernel#last_recovery
+#### Kernel#last_recovery
 There is a new method: `Kernel#last_recovery` which will return the id of the last recovery invoked for the current thread. So you can do things like this:
 
 ```ruby
