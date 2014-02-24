@@ -119,9 +119,66 @@ You've always known he (or she) knew Lisp and now you have something to ask him 
 
 ## Some Notes About the Ruby Implementation
 
-- You can pass parameters to `Condition#recover`. The first parameter is always the id of the recovery. The rest will be passed directly to the recovery block.
-- You can pass an options hash to the `rescue` clause that is attached to your recovery. This is handy if you want to attach extra data about the recovery or the circumstances in which it is being raised. Pass them as the second parameter in `Condition#set_recovery`. You can retrieve them with `Condition#recovery_options`. Reserved keys are `:summary`, and `:discussion`
 - `Kernel#raise` now has a return value! It is the return value from the recovery block.
+    ```ruby
+    def test
+      # (result is explicit for this example)
+      result = raise "Test" do |e|
+        e.set_recovery(:test_return){"hello"}
+      end
+      result
+    rescue Exception => e
+      e.recover :test_return
+    end
+    ```
+
+    returns 
+
+    ```
+    2.0.0-p353 :012 > test
+     => "hello" 
+    ```
+
+- You can pass parameters to `Condition#recover`. The first parameter is always the id of the recovery. The rest will be passed directly to the recovery block. Building on the above example:
+
+    ```ruby
+    def test
+      # (result is explicit for this example)
+      result = raise "Test" do |e|
+        e.set_recovery(:test_return){|p|p} # pass back whatever is passed in
+      end
+      result
+    rescue Exception => e
+      e.recover :test_return, 5
+    end
+    ```
+
+    returns 
+
+    ```
+    2.0.0-p353 :012 > test
+     => 5
+    ```
+
+
+
+- You can pass an options hash to the `rescue` clause that is attached to your recovery. This is handy if you want to attach extra data about the recovery or the circumstances in which it is being raised. Pass them as the second parameter in `Condition#set_recovery`. You can retrieve them with `Condition#recovery_options`. Reserved keys are `:summary`, and `:discussion`
+    ```ruby
+      raise "Test" do |e|
+        discussion = "Replaces the misparsed entry with one you specify."
+        e.set_recovery(:replace_value, :discussion => discussion){|p|p}
+      end
+    ```
+
+    To demonstrate this, here's a rescue statement. The rescue simply prints out the description (which is not really useful as a rescue statement) but it's an example of how a REPL might output to the user a list of recoveries to choose from and the details of what they do.
+
+    ```
+    rescue MisparsedEntryException => e
+      $stderr.puts e.recovery_options(:replace_value)[:discussion]
+    ```
+
+
+
 - There is a new method: `Kernel#last_recovery` which will return the id of the last recovery invoked for the current thread. So you can do things like this:
 
     ```ruby
