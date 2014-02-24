@@ -14,7 +14,7 @@ module Mulligan
       block.call(e) unless block.nil?
 
       # only use callcc if there are restarts otherwise re-raise it
-      super(e) if e.send(:restarts).empty?
+      super(e) if e.send(:recoveries).empty?
       callcc do |c|
         e.send(:__set_continuation__, c)
         super(e)
