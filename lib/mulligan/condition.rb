@@ -10,8 +10,15 @@ module Mulligan
     # Creates or replaces a recovery strategy.
     # 
     # @param [String or Symbol] id the key to reference the recovery later
-    # @param [String] options specifies a token for this recovery that can later be
-    #                 retrieved. Can only be set once.
+    # @param [Hash] options specifies a token for this recovery that can later be
+    #               retrieved. Can only be set once. See {#recovery_options}
+    #               Reserved Keys are as follows:
+    #                 :data       - Use this as a parameter to send a piece of data to rescuers to use
+    #                               as they determine their strategy for recovering.
+    #                 :summary    - A short, one-line description of this recovery
+    #                 :discussion - The complete documentation of this recovery. Please include a
+    #                               description of the behavior, the return parameter, and any parameters
+    #                               the recovery can take
     def set_recovery(id, options={}, &block)
       return if block.nil?
       restarts[id.to_sym] = options.merge(:block => block)
