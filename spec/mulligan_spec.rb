@@ -84,6 +84,15 @@ describe Mulligan do
         expect(data).to be(5)
       end
 
+      it "should pass summary created in set_restart" do
+        data = nil
+        outer_test(style) do |e|
+          data = e.recovery_options(:return_param)[:summary]
+          e.recover(:return_param)
+        end
+        expect(data).to eq("Passes the parameter sent in as the value of the block.")
+      end
+
       it "should be read-only" do
         result = outer_test(style) do |e|
           e.recovery_options(:return_param)[:new_entry] = 5
@@ -136,7 +145,7 @@ def core_test(style)
   raise t do |e|
     e.set_recovery(:ignore){|p|p}
     e.set_recovery(:no_block)
-    e.set_recovery(:return_param, data: 5){|p|p}
+    e.set_recovery(:return_param, data: 5, summary:"Passes the parameter sent in as the value of the block."){|p|p}
     e.set_recovery(:return_param2){|p|p}
   end
 end
