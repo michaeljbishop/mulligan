@@ -21,7 +21,7 @@ module Mulligan
     #                               the recovery can take
     def set_recovery(id, options={}, &block)
       return if block.nil?
-      restarts[id.to_sym] = options.merge(:block => block)
+      recoveries[id.to_sym] = options.merge(:block => block)
       nil
     end
     
@@ -30,7 +30,7 @@ module Mulligan
     # @param [String or Symbol] id the key for the recovery
     # @return [Boolean] whether or not a recovery exists for this id
     def recovery_exist?(id)
-      restarts.has_key?(id.to_sym)
+      recoveries.has_key?(id.to_sym)
     end
     
     # Retrieves the options specified when a recovery was made
@@ -39,7 +39,7 @@ module Mulligan
     # @return [Hash] The options set on this recovery
     def recovery_options(id)
       return nil unless recovery_exist?(id.to_sym)
-      restarts[id.to_sym].dup.reject{|k,v| [:block, :continuation].include? k}
+      recoveries[id.to_sym].dup.reject{|k,v| [:block, :continuation].include? k}
     end
   
     # Executes the recovery.
@@ -53,7 +53,7 @@ module Mulligan
     def recover(id, *params)
       Thread.current[:__last_recovery__] = nil
       raise ControlException unless recovery_exist?(id.to_sym)
-      data = restarts[id.to_sym]
+      data = recoveries[id.to_sym]
       if data[:continuation].nil?
         $stderr.puts "Cannot invoke restart #{id}. Must first raise this exception: '#{self.inspect}'"
         return
@@ -64,13 +64,15 @@ module Mulligan
   
   private
 
-    def restarts
-      @restarts ||= {}
+    def recoveries
+      @recoveries ||= {}
     end
 
     def __set_continuation__(continuation)
-      # the the continuation for any restarts that are not yet assigned one
-      restarts.each do |key, r|
+      # the the continuation for any recoveries that are not yet assigned one
+      # It's important not to overwrite the existing continuations because a recovery
+      # should return to the place it was raised, always.
+      recoveries.each do |key, r|
         next if r.has_key? :continuation
         r[:continuation] = continuation
       end
