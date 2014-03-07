@@ -1,5 +1,3 @@
-require 'continuation'
-
 module Mulligan
 
   # An exception that is thrown when invoking a non-existent recovery.
@@ -66,7 +64,7 @@ module Mulligan
         return
       end
       Thread.current[:__last_recovery__] = id
-      data[:continuation].call(data[:block].call(*params))
+      data[:continuation].call(*data[:block].call(*params))
     end
   
   private
@@ -75,7 +73,8 @@ module Mulligan
       @recoveries ||= {}
     end
 
-    def __set_continuation__(continuation)
+    def __set_continuation__
+      continuation = Proc.new
       # the the continuation for any recoveries that are not yet assigned one
       # It's important not to overwrite the existing continuations because a recovery
       # should return to the place it was raised, always.
