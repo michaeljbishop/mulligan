@@ -110,11 +110,25 @@ describe Mulligan do
         end
         expect(result.recovery_options(:return_param)[:new_entry]).to be_nil
       end
-    end
-    
-    it "should support overriding a recovery and calling the inherited recovery"
-  end
 
+      if Exception.method_defined?(:cause)
+        it "should support the `#cause` method in the native extension" do
+          begin
+            raise "test"
+          rescue => e
+            begin
+              raise "test2"
+            rescue =>e
+             expect(e.cause.message).to eq "test"
+            end
+          end
+        end
+      end
+
+      it "should support overriding a recovery and calling the inherited recovery"
+    end
+  end
+    
   context Exception do
     let(:style){:manual}
     it_behaves_like "a Mulligan Condition"
