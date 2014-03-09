@@ -3,10 +3,14 @@ require "mulligan/condition"
 require "mulligan/kernel"
 
 class Exception
-  prepend Mulligan::Condition
+  include Mulligan::Condition
 end
 
 class Object
-  prepend Mulligan::Kernel
+  if RUBY_VERSION < "2.0"
+    # ruby 1.9 replaces raise in the extension
+    include Mulligan::Kernel
+  else
+    prepend Mulligan::Kernel
+  end
 end
-
