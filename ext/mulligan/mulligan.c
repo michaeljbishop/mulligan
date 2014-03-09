@@ -33,6 +33,12 @@ void Init_mulligan(void)
   VALUE mKernel = rb_define_module_under(mMulligan, "Kernel");
   rb_define_method(mKernel, "raise", rb_mulligan_raise, -1);
 
+#if RUBY_API_VERSION_MAJOR < 2
+  // completely replaces Ruby's version of raise.
+  // In Ruby 2 we prepend (but don't call super)
+  rb_define_global_function("raise", rb_mulligan_raise, -1);
+#endif
+
   rb_require("continuation");
   id_recoveries = rb_intern("recoveries");
   id_empty_ = rb_intern("empty?");
@@ -80,10 +86,20 @@ static VALUE
 rb_mulligan_raise(int argc, VALUE *argv, VALUE self)
 {
     // -----------------------------------------------------------
+    //  C90-compliance asks us to declare all variables at the top
+    // -----------------------------------------------------------
+    VALUE recoveries = Qnil;
+    VALUE should_raise_ary = Qnil;
+    VALUE contextVars[3];
+    VALUE context = Qnil;
+    VALUE result = Qnil;
+    VALUE is_empty = Qnil;
+    
+    // -----------------------------------------------------------
     //  Get a reference to the Exception object
     // -----------------------------------------------------------
     VALUE e = rb_make_exception(argc, argv);
-    
+
     // -----------------------------------------------------------
     //  With the Exception in place, yield to the block
     // -----------------------------------------------------------
@@ -93,8 +109,8 @@ rb_mulligan_raise(int argc, VALUE *argv, VALUE self)
     // -----------------------------------------------------------
     //  If there are no recoveries, just throw it without a callcc
     // -----------------------------------------------------------
-    VALUE recoveries = rb_funcall(e, id_send, 1, ID2SYM(id_recoveries));
-    VALUE is_empty = rb_funcall(recoveries, id_empty_, 0);
+    recoveries = rb_funcall(e, id_send, 1, ID2SYM(id_recoveries));
+    is_empty = rb_funcall(recoveries, id_empty_, 0);
     if (RTEST(is_empty))
         goto raise;
     
@@ -110,12 +126,13 @@ rb_mulligan_raise(int argc, VALUE *argv, VALUE self)
     // an array of one. That array will be passed to the callback where it will be
     // modified and we can read it still in this context after all the callbacks
     // are complete.
-    VALUE should_raise_ary = rb_ary_to_ary(Qtrue);
-
-    VALUE contextVars[] = {self, should_raise_ary, e};
-    VALUE context = rb_ary_new4(ARRAY_SIZE(contextVars), contextVars);
+    should_raise_ary = rb_ary_to_ary(Qtrue);
+    contextVars[0] = self;
+    contextVars[1] = should_raise_ary;
+    contextVars[2] = e;
+    context = rb_ary_new4(ARRAY_SIZE(contextVars), contextVars);
     
-    VALUE result = rb_block_call(
+    result = rb_block_call(
         self,
         id_callcc,
         0, // argc
@@ -130,7 +147,7 @@ rb_mulligan_raise(int argc, VALUE *argv, VALUE self)
 
 raise:
     rb_exc_raise(e);
-    UNREACHABLE;
+//     UNREACHABLE;
 }
 
 static VALUE
@@ -142,7 +159,6 @@ callcc_block(VALUE c, VALUE in_context, int argc, VALUE argv[])
 
     VALUE contextVars[] = {self, should_raise_ary, c};
     VALUE context = rb_ary_new4(ARRAY_SIZE(contextVars), contextVars);
-    VALUE block_argv[1] = {ID2SYM(id___set_continuation__)};
 
     return rb_block_call(
         e,
@@ -157,14 +173,13 @@ callcc_block(VALUE c, VALUE in_context, int argc, VALUE argv[])
 static VALUE
 __set_continuation__block(VALUE unused, VALUE in_context, int argc, VALUE argv[])
 {
-    VALUE self =             rb_ary_entry(in_context, 0);
+//     VALUE self =             rb_ary_entry(in_context, 0);
     VALUE should_raise_ary = rb_ary_entry(in_context, 1);
     VALUE c =                rb_ary_entry(in_context, 2);
+    VALUE proc = rb_block_proc();
 
     // Here we set our `should_raise` pointer back to false
     rb_ary_store(should_raise_ary, 0, Qfalse);
-    
-    VALUE proc = rb_block_proc();
     
     return rb_funcall_with_block(c, id_call, argc, argv, proc);
 }
