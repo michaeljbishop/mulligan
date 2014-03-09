@@ -141,6 +141,24 @@ describe Mulligan do
         expect(e.has_recovery?:ignore).to be_true
       end
     end
+
+    it "should properly report the line when raising with no block" do
+      begin
+        line = __LINE__ ; raise "Test"
+      rescue => e
+        expect(line_from_stack_string(e.backtrace[0])).to eq(line)
+      end
+    end
+
+    it "should properly report the line when raising WITH a block" do
+      begin
+        line = __LINE__ ; raise "Test" do |e|
+          false
+        end
+      rescue => e
+        expect(line_from_stack_string(e.backtrace[0])).to eq(line)
+      end
+    end
   end
 end
 
@@ -148,6 +166,11 @@ end
 #=======================
 #    HELPER METHODS
 #=======================
+
+# returns the line given a string from Exception#backtrace
+def line_from_stack_string(s)
+  s.match(/[^:]+:(\d+)/)[1].to_i
+end
 
 def core_test(style)
   t =  "Test Exception"
