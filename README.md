@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/michaeljbishop/mulligan.png?branch=master)](https://travis-ci.org/michaeljbishop/mulligan)
 # Mulligan
 
 "In golf,...a stroke that is replayed from the spot of the previous stroke without penalty, due to an errant shot made on the previous stroke. The result is, as the hole is played and scored, as if the first errant shot had never been made." -- [Wikipedia](http://en.wikipedia.org/wiki/Mulligan_(games)#Mulligan_in_golf)
@@ -202,10 +203,10 @@ There is more than one way to do this. In the end, I wanted something that would
 
 However, to make that happen, I had to use the `#callcc` method. I'm not completely sure how supported this is across different Ruby implementations. Additionally, I've read that it can be a rather slow method. It's important to note that if an exception is raised but does not have any attached recoveries, `#callcc` will not be called and the standard exception mechanism is used.
 
-### Ruby 2.0 required
+### Ruby Support
 
-This is a superficial requirement. It's only because I'm using the `prepend` keyword to open up the `Exception` class and `Kernel` Module. There's an [issue for this](https://github.com/michaeljbishop/mulligan/issues/1).
-
+[![Build Status](https://travis-ci.org/michaeljbishop/mulligan.png?branch=master)](https://travis-ci.org/michaeljbishop/mulligan)
+ Mulligan supports MRI versions 1.9.3 -> 2.1.1
 
 ### "Recovery"? What's wrong with "Restart"?
 
