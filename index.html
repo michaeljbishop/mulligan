@@ -1,0 +1,324 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Mulligan by michaeljbishop</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/main.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+
+      <header>
+        <h1>Mulligan</h1>
+        <p>Restartable Exceptions for Ruby (like Lisp&#39;s &quot;Conditions&quot; and &quot;Restarts&quot;)</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+
+        <a href="https://github.com/michaeljbishop/mulligan" class="button fork"><strong>View On GitHub</strong></a>
+        <div class="downloads">
+          <span>Downloads:</span>
+          <ul>
+            <li><a href="https://github.com/michaeljbishop/mulligan/zipball/master" class="button">ZIP</a></li>
+            <li><a href="https://github.com/michaeljbishop/mulligan/tarball/master" class="button">TAR</a></li>
+          </ul>
+        </div>
+      </div><!-- end banner -->
+
+    <div class="wrapper">
+      <nav>
+        <ul></ul>
+      </nav>
+      <section>
+        <p><a href="https://travis-ci.org/michaeljbishop/mulligan"><img src="https://travis-ci.org/michaeljbishop/mulligan.png?branch=master" alt="Build Status"></a></p>
+
+<h1>
+<a name="mulligan" class="anchor" href="#mulligan"><span class="octicon octicon-link"></span></a>Mulligan</h1>
+
+<p>"In golf,...a stroke that is replayed from the spot of the previous stroke without penalty, due to an errant shot made on the previous stroke. The result is, as the hole is played and scored, as if the first errant shot had never been made." -- <a href="http://en.wikipedia.org/wiki/Mulligan_(games)#Mulligan_in_golf">Wikipedia</a></p>
+
+<h2>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<p>When rescuing an exception, the Mulligan gem allows you to execute some recovery code, then continue your program as if the exception had never been thrown in the first place</p>
+
+<p>Here's a very simple contrived example:</p>
+
+<div class="highlight highlight-ruby"><pre> <span class="mi">1</span> <span class="nb">require</span> <span class="s1">'mulligan'</span>
+ <span class="mi">2</span> 
+ <span class="mi">3</span> <span class="k">def</span> <span class="nf">method_that_raises</span>
+ <span class="mi">4</span>   <span class="nb">puts</span> <span class="s2">"RAISING"</span>
+ <span class="mi">5</span>   <span class="k">raise</span> <span class="s2">"You can ignore this"</span> <span class="k">do</span> <span class="o">|</span><span class="n">e</span><span class="o">|</span>
+ <span class="mi">6</span>     <span class="n">e</span><span class="o">.</span><span class="n">set_recovery</span> <span class="ss">:ignore</span> <span class="k">do</span>
+ <span class="mi">7</span>       <span class="nb">puts</span> <span class="s2">"IGNORING"</span>
+ <span class="mi">8</span>     <span class="k">end</span>
+ <span class="mi">9</span>   <span class="k">end</span>
+<span class="mi">10</span>   <span class="nb">puts</span> <span class="s2">"AFTER RAISE"</span>
+<span class="mi">11</span> <span class="k">end</span>
+<span class="mi">12</span>
+<span class="mi">13</span> <span class="k">def</span> <span class="nf">calling_method</span>
+<span class="mi">14</span>   <span class="n">method_that_raises</span>
+<span class="mi">15</span>   <span class="s2">"SUCCESS"</span>
+<span class="mi">16</span>   <span class="k">rescue</span> <span class="no">Exception</span> <span class="o">=&gt;</span> <span class="n">e</span>
+<span class="mi">17</span>     <span class="nb">puts</span> <span class="s2">"RESCUED"</span>
+<span class="mi">18</span>     <span class="n">e</span><span class="o">.</span><span class="n">recover</span> <span class="ss">:ignore</span>
+<span class="mi">19</span>     <span class="nb">puts</span> <span class="s2">"HANDLED"</span>
+<span class="mi">20</span> <span class="k">end</span>
+</pre></div>
+
+<p>Running this at the REPL shows:</p>
+
+<pre><code>2.0.0-p353 :009 &gt; calling_method
+RAISING
+RESCUED
+IGNORING
+AFTER RAISE
+ =&gt; "SUCCESS" 
+</code></pre>
+
+<h3>
+<a name="yeah-wait-shouldnt-we-see-handled-in-that-output" class="anchor" href="#yeah-wait-shouldnt-we-see-handled-in-that-output"><span class="octicon octicon-link"></span></a>Yeah... wait, shouldn't we see "HANDLED" in that output?!</h3>
+
+<p>Here's what happened in detail:</p>
+
+<ol>
+<li>
+<code>#method_that_raises</code> is called from <code>#calling_method</code> (line 14)</li>
+<li>
+<code>#method_that_raises</code> raises an exception <em>but</em> before it is raised, a "recovery" can be added to the exception (line 6) in the block passed to <code>#raise</code>. (The exception is the parameter 'e' passed to the <code>#raise</code> block)</li>
+<li>The exception is then raised (line 5) and rescued (line 16)</li>
+<li>The "recovery" on the exception is called (line 18) which executes the statement in the recovery block (defined on line 7).</li>
+<li>Since the exception has recovered, control taks us back to the point <em>immediately after the block passed to</em> <code>#raise</code> (line 10), continuing as if <code>#raise</code> hadn't been called in the first place.</li>
+<li>The method exits (line 11) and we return to line 15 as if we never saw the exception.</li>
+<li>We exit the method because there's no exception to rescue (line 20). The last value in the function was "SUCCESS" so that is returned.</li>
+</ol><h3>
+<a name="i-see-what-you-did-there-thats-cool-but-why-should-i-care" class="anchor" href="#i-see-what-you-did-there-thats-cool-but-why-should-i-care"><span class="octicon octicon-link"></span></a>I see what you did there. That's cool, but why should I care?</h3>
+
+<p>You should care because your <code>rescue</code> statement is likely to be far from the <code>raise</code> in your program's execution and the further away it is, the harder it is to fix the error intelligently. It's even harder if that <code>raise</code> comes from a library you are calling.</p>
+
+<p>Specifying recoveries on the exception allows the lower-level code to offer strategies for fixing the exception without the higher-level code needing to know the internals of those strategies.</p>
+
+<p>Better yet, it offers the ability to "go back in time" <a href="http://en.wikipedia.org/wiki/Groundhog_Day_(film)">Groundhog Day</a>-style, but this time, your code knows how to play the piano, how to sculpt ice, and how to speak French.</p>
+
+<p>Find your favorite chair and read these:</p>
+
+<ul>
+<li><a href="http://opendylan.org/books/drm/Conditions_Background">Dylan Reference Manual - Conditions - Background</a></li>
+<li>
+<a href="http://www.gigamonkeys.com/book/beyond-exception-handling-conditions-and-restarts.html">Beyond Exception Handling: Conditions and Restarts</a> (keep in mind the "restarts" are what we are calling "recoveries").</li>
+</ul><h3>
+<a name="this-seems-like-a-good-thing-but-what-can-i-do-with-it" class="anchor" href="#this-seems-like-a-good-thing-but-what-can-i-do-with-it"><span class="octicon octicon-link"></span></a>This <em>seems</em> like a good thing, but what can I do with it?</h3>
+
+<p>Here are some use cases:</p>
+
+<h4>
+<a name="fixing-network-connection-errors" class="anchor" href="#fixing-network-connection-errors"><span class="octicon octicon-link"></span></a>Fixing network connection errors</h4>
+
+<div class="highlight highlight-ruby"><pre><span class="k">def</span> <span class="nf">http_post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+  <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="n">networking</span> <span class="n">code</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
+  <span class="k">raise</span> <span class="no">CredentialsExpiredException</span> <span class="k">if</span> <span class="n">response</span> <span class="o">==</span> <span class="mi">401</span>
+  <span class="k">raise</span> <span class="no">ConnectionFailedException</span> <span class="k">if</span> <span class="n">response</span> <span class="o">==</span> <span class="mi">404</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">post_resource</span><span class="p">(</span><span class="n">object</span><span class="p">)</span>
+  <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="n">assemble</span> <span class="n">url</span> <span class="ow">and</span> <span class="n">data</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
+  <span class="n">http_post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+  <span class="k">rescue</span> <span class="no">Exception</span> <span class="o">=&gt;</span> <span class="n">e</span>
+    <span class="k">raise</span><span class="p">(</span><span class="n">e</span><span class="p">){</span><span class="o">|</span><span class="n">e</span><span class="o">|</span><span class="n">e</span><span class="o">.</span><span class="n">set_recovery</span><span class="p">(</span><span class="ss">:retry</span><span class="p">){}}</span>
+    <span class="k">retry</span> <span class="k">if</span> <span class="n">last_recovery</span> <span class="o">==</span> <span class="ss">:retry</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">save_resources</span>
+  <span class="n">post_resource</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+  <span class="n">post_resource</span><span class="p">(</span><span class="n">post</span><span class="p">)</span>
+  <span class="n">post_resource</span><span class="p">(</span><span class="n">comment</span><span class="p">)</span>
+
+  <span class="k">rescue</span> <span class="no">CredentialsExpiredException</span> <span class="o">=&gt;</span> <span class="n">e</span>
+    <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="n">fix</span> <span class="n">credentials</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
+    <span class="n">e</span><span class="o">.</span><span class="n">recover</span> <span class="ss">:retry</span>
+  <span class="k">rescue</span> <span class="no">ConnectionFailedException</span> <span class="o">=&gt;</span> <span class="n">e</span>
+    <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="n">switch</span> <span class="n">from</span> <span class="n">wifi</span> <span class="n">to</span> <span class="n">cellular</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
+    <span class="n">e</span><span class="o">.</span><span class="n">recover</span> <span class="ss">:retry</span>
+<span class="k">end</span>
+</pre></div>
+
+<h4>
+<a name="screen-scraping-in-dylan" class="anchor" href="#screen-scraping-in-dylan"><span class="octicon octicon-link"></span></a>Screen Scraping (in Dylan)</h4>
+
+<p><a href="https://groups.google.com/d/msg/comp.lang.dylan/gszO7d7BAok/zqVbQlNDKzAJ">The maling list post</a></p>
+
+<p>This is going to be inherently messy and for a long-running program like this, potentially painful to restart if the data is found to be incorrect. Much better to just put in some recoveries and choose from them if errors are found.</p>
+
+<h4>
+<a name="handling-errors-in-parsers" class="anchor" href="#handling-errors-in-parsers"><span class="octicon octicon-link"></span></a>Handling errors in parsers</h4>
+
+<p>You might write a parser to read XML or a log file format and it might encounter malformed entries. You can make that low-level parser code much more reusable if you specify a few recoveries in the raised exceptions. Higher level code will have many more choices to handle errors.</p>
+
+<p>BTW, Here's your second chance to read <a href="http://www.gigamonkeys.com/book/beyond-exception-handling-conditions-and-restarts.html">Beyond Exception Handling: Conditions and Restarts</a>. There's a log file parsing example in there.</p>
+
+<h4>
+<a name="ask-your-friendly-lisp-coder-theyve-been-solving-these-problems-for-years" class="anchor" href="#ask-your-friendly-lisp-coder-theyve-been-solving-these-problems-for-years"><span class="octicon octicon-link"></span></a>Ask your friendly Lisp coder. They've been solving these problems for years.</h4>
+
+<p>You've always known he (or she) knew Lisp and now you have something to ask him about.</p>
+
+<h2>
+<a name="some-notes-about-the-ruby-implementation" class="anchor" href="#some-notes-about-the-ruby-implementation"><span class="octicon octicon-link"></span></a>Some Notes About the Ruby Implementation</h2>
+
+<h3>
+<a name="methods" class="anchor" href="#methods"><span class="octicon octicon-link"></span></a>Methods</h3>
+
+<h4>
+<a name="kernelraise" class="anchor" href="#kernelraise"><span class="octicon octicon-link"></span></a>Kernel#raise</h4>
+
+<ol>
+<li>
+<code>Kernel#raise</code> now has a return value! It is the value returned from the recovery block.</li>
+<li>
+<code>Kernel#raise</code> also yields the exception to a block. It does this since it's pretty common to have <code>Kernel#raise</code> create an exception for you and without this, you couldn't otherwise attach recoveries.</li>
+</ol><div class="highlight highlight-ruby"><pre><span class="k">def</span> <span class="nf">test</span>
+  <span class="c1"># (result is explicit for this example)</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="k">raise</span> <span class="s2">"Test"</span> <span class="k">do</span> <span class="o">|</span><span class="n">e</span><span class="o">|</span>              <span class="c1"># yields Exception to the block</span>
+    <span class="n">e</span><span class="o">.</span><span class="n">set_recovery</span><span class="p">(</span><span class="ss">:test_return</span><span class="p">){</span><span class="s2">"hello"</span><span class="p">}</span>   <span class="c1"># recovery block returns a string</span>
+  <span class="k">end</span>
+  <span class="n">result</span>
+<span class="k">rescue</span> <span class="no">Exception</span> <span class="o">=&gt;</span> <span class="n">e</span>
+  <span class="n">e</span><span class="o">.</span><span class="n">recover</span> <span class="ss">:test_return</span>
+<span class="k">end</span>
+</pre></div>
+
+<p>returns </p>
+
+<pre><code>2.0.0-p353 :012 &gt; test
+ =&gt; "hello" 
+</code></pre>
+
+<h4>
+<a name="you-can-pass-parameters-to-exceptionrecover" class="anchor" href="#you-can-pass-parameters-to-exceptionrecover"><span class="octicon octicon-link"></span></a>You can pass parameters to Exception#recover</h4>
+
+<p>The first parameter is always the id of the recovery. The rest will be passed directly to the recovery block. Building on the above example:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="k">def</span> <span class="nf">test</span>
+  <span class="c1"># (result is explicit for this example)</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="k">raise</span> <span class="s2">"Test"</span> <span class="k">do</span> <span class="o">|</span><span class="n">e</span><span class="o">|</span>
+    <span class="n">e</span><span class="o">.</span><span class="n">set_recovery</span><span class="p">(</span><span class="ss">:test_return</span><span class="p">){</span><span class="o">|</span><span class="nb">p</span><span class="o">|</span><span class="nb">p</span><span class="p">}</span> <span class="c1"># pass back whatever is passed in</span>
+  <span class="k">end</span>
+  <span class="n">result</span>
+<span class="k">rescue</span> <span class="no">Exception</span> <span class="o">=&gt;</span> <span class="n">e</span>
+  <span class="n">e</span><span class="o">.</span><span class="n">recover</span> <span class="ss">:test_return</span><span class="p">,</span> <span class="mi">5</span>
+<span class="k">end</span>
+</pre></div>
+
+<p>returns </p>
+
+<pre><code>2.0.0-p353 :012 &gt; test
+ =&gt; 5
+</code></pre>
+
+<h4>
+<a name="your-recovery-can-attach-data-to-be-read-by-the-rescue-clause" class="anchor" href="#your-recovery-can-attach-data-to-be-read-by-the-rescue-clause"><span class="octicon octicon-link"></span></a>Your recovery can attach data to be read by the rescue clause</h4>
+
+<p>You can pass an options hash to the <code>rescue</code> clause that is attached to your recovery. This is handy if you want to attach extra data about the recovery or the circumstances in which it is being raised. Pass them as the second parameter in <code>Exception#set_recovery</code>. You can retrieve them with <code>Exception#recovery_options</code>. Reserved keys are <code>:summary</code>, and <code>:discussion</code></p>
+
+<div class="highlight highlight-ruby"><pre><span class="k">raise</span> <span class="s2">"Test"</span> <span class="k">do</span> <span class="o">|</span><span class="n">e</span><span class="o">|</span>
+  <span class="n">summary</span> <span class="o">=</span> <span class="s2">"Replaces the misparsed entry with one you specify."</span>
+  <span class="n">e</span><span class="o">.</span><span class="n">set_recovery</span><span class="p">(</span><span class="ss">:replace_value</span><span class="p">,</span> <span class="ss">:summary</span> <span class="o">=&gt;</span> <span class="n">summary</span><span class="p">){</span><span class="o">|</span><span class="nb">p</span><span class="o">|</span><span class="nb">p</span><span class="p">}</span>
+<span class="k">end</span>
+</pre></div>
+
+<p>To demonstrate this, here's a rescue statement. The rescue simply prints out the description which is not really useful as a rescue statement, but it's an example of how a REPL might output to the user a list of recoveries to choose from and the details of what they do.</p>
+
+<div class="highlight highlight-ruby"><pre><span class="k">rescue</span> <span class="no">MisparsedEntryException</span> <span class="o">=&gt;</span> <span class="n">e</span>
+  <span class="vg">$stderr</span><span class="o">.</span><span class="n">puts</span> <span class="s2">"Choose a recovery:"</span>
+  <span class="n">e</span><span class="o">.</span><span class="n">recovery_identifiers</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="nb">id</span><span class="o">|</span>
+    <span class="vg">$stderr</span><span class="o">.</span><span class="n">puts</span> <span class="s2">"  </span><span class="si">#{</span><span class="nb">id</span><span class="si">}</span><span class="s2">: - </span><span class="si">#{</span><span class="n">e</span><span class="o">.</span><span class="n">recovery_options</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span><span class="o">[</span><span class="ss">:summary</span><span class="o">]</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+  <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="n">read</span> <span class="n">choice</span> <span class="ow">and</span> <span class="n">execute</span> <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</pre></div>
+
+<h4>
+<a name="kernellast_recovery" class="anchor" href="#kernellast_recovery"><span class="octicon octicon-link"></span></a>Kernel#last_recovery</h4>
+
+<p>There is a new method: <code>Kernel#last_recovery</code> which will return the id of the last recovery invoked for the current thread. So you can do things like this:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="k">begin</span>
+  <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="n">some</span> <span class="n">code</span> <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+<span class="k">rescue</span> <span class="no">Exception</span> <span class="o">=&gt;</span> <span class="n">e</span>
+  <span class="k">raise</span><span class="p">(</span><span class="n">e</span><span class="p">){</span><span class="o">|</span><span class="n">e</span><span class="o">|</span><span class="n">e</span><span class="o">.</span><span class="n">set_recovery</span><span class="p">(</span><span class="ss">:retry</span><span class="p">){}}</span>
+  <span class="k">retry</span> <span class="k">if</span> <span class="n">last_recovery</span> <span class="o">==</span> <span class="ss">:retry</span>
+<span class="k">end</span>
+</pre></div>
+
+<h3>
+<a name="mulliigan-uses-callcc" class="anchor" href="#mulliigan-uses-callcc"><span class="octicon octicon-link"></span></a>Mulliigan uses #callcc</h3>
+
+<p>There is more than one way to do this. In the end, I wanted something that would fit very naturally into Ruby's existing Exception mechanism, yet offer as much of the benefits of Lisp's "restart" as I could.</p>
+
+<p>However, to make that happen, I had to use the <code>#callcc</code> method. I'm not completely sure how supported this is across different Ruby implementations. Additionally, I've read that it can be a rather slow method. It's important to note that if an exception is raised but does not have any attached recoveries, <code>#callcc</code> will not be called and the standard exception mechanism is used.</p>
+
+<h3>
+<a name="ruby-support" class="anchor" href="#ruby-support"><span class="octicon octicon-link"></span></a>Ruby Support</h3>
+
+<p><a href="https://travis-ci.org/michaeljbishop/mulligan"><img src="https://travis-ci.org/michaeljbishop/mulligan.png?branch=master" alt="Build Status"></a>
+ Mulligan supports MRI versions 1.9.3 -&gt; 2.1.1</p>
+
+<h3>
+<a name="recovery-whats-wrong-with-restart" class="anchor" href="#recovery-whats-wrong-with-restart"><span class="octicon octicon-link"></span></a>"Recovery"? What's wrong with "Restart"?</h3>
+
+<p>I had to make a hard choice about naming the thing that allows an exception to be recovered from. "Restart" is the word used in Lisp, but because it is used as a verb and as a noun, it makes it hard to know what a Ruby method named <code>#restart</code> would do. Does it return a "restart" or does it execute a restart?</p>
+
+<p>Changing the name to a noun subtracts that confusion (though arguably adds some back for those coming from languages where the "restart" name is entrenched).</p>
+
+<h2>
+<a name="influences" class="anchor" href="#influences"><span class="octicon octicon-link"></span></a>Influences</h2>
+
+<ul>
+<li>
+<a href="http://www.gigamonkeys.com/book/beyond-exception-handling-conditions-and-restarts.html">Beyond Exception Handling: Conditions and Restarts</a> -- (from <a href="http://www.gigamonkeys.com/book/">Practical Common Lisp</a>)</li>
+<li>
+<a href="http://avdi.org/talks/rockymtnruby-2011/things-you-didnt-know-about-exceptions.html">Things You Didn't Know About Exceptions</a> (Avdi Grimm)</li>
+<li>
+<a href="http://chneukirchen.org/blog/archive/2005/03/restartable-exceptions.html">Restartable Exceptions</a> (Christian Neukirchen)</li>
+<li>
+<a href="https://www.ruby-forum.com/topic/179474">Common Lisp conditions</a> (Ruby Forum)</li>
+</ul><h2>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<p>At the moment, 'mulligan' isn't submitted to RubyGems. However, you can still include it as a gem by adding this line to your application's Gemfile:</p>
+
+<pre><code>gem "mulligan", github: 'michaeljbishop/mulligan'
+</code></pre>
+
+<p>Then execute:</p>
+
+<pre><code>$ bundle
+</code></pre>
+
+<h2>
+<a name="contributing" class="anchor" href="#contributing"><span class="octicon octicon-link"></span></a>Contributing</h2>
+
+<ol>
+<li>Fork it <a href="http://github.com/michaeljbishop/mulligan">http://github.com/michaeljbishop/mulligan</a>
+</li>
+<li>Commit your changes (<code>git commit -am 'Add some feature'</code>)</li>
+<li>Push to the branch (<code>git push origin my-new-feature</code>)</li>
+<li>Create new Pull Request</li>
+</ol>
+      </section>
+      <footer>
+        <p>Project maintained by <a href="https://github.com/michaeljbishop">michaeljbishop</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
