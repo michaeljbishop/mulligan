@@ -85,7 +85,7 @@ describe Mulligan do
         expect(data).to be_nil
       end
 
-      it "should pass data created in set_restart" do
+      it "should pass data created in set_recovery" do
         data = nil
         outer_test(style) do |e|
           data = e.recovery_options(:return_param)[:data]
@@ -94,7 +94,7 @@ describe Mulligan do
         expect(data).to be(5)
       end
 
-      it "should pass summary created in set_restart" do
+      it "should pass summary created in set_recovery" do
         data = nil
         outer_test(style) do |e|
           data = e.recovery_options(:return_param)[:summary]
@@ -140,8 +140,7 @@ describe Mulligan do
     end
   end
 
-  context "Kernel#raise" do
-    let(:style){:raise}
+  shared_examples "raising exceptions" do
     it_behaves_like "a Mulligan Condition"
 
     it "should propgate recoveries when raising a pre-existing exception" do
@@ -173,8 +172,107 @@ describe Mulligan do
         expect(line_from_stack_string(e.backtrace[0])).to eq(line)
       end
     end
+
+    it "should modify variables in the binding of the raiser" do
+      begin
+        result = scope_test
+      rescue => e
+        e.recover :change
+      end
+      expect(result).to eq(7)
+    end
+
+    context "when raise is called with no arguments" do
+      it "should raise $! when $! is not nil" do
+        begin
+          raise Exception, "test"
+        rescue Exception => e
+          expect($!).to be(e)
+          begin
+            raise
+          rescue Exception => e2
+            expect(e2).to be(e)
+          end
+        end
+      end
+      
+      it "should raise a RuntimeError when $! is nil"  do
+        expect { raise }.to raise_error(RuntimeError)
+      end
+    end
+    
+    it "should raise a RuntimeError with string message when raise is called only with a string" do
+      message = "test"
+      begin
+        raise message
+      rescue RuntimeError => e
+        expect(e.message).to eq(message)
+      end
+    end
+
+    it "should raise a TypeError when called with two strings" do
+      expect {
+        raise "hello", "world"
+      }.to raise_error(TypeError)
+    end
+    
+    it "should, when called with a Exception subclassclass, raise that subclass" do
+      expect {
+        raise CustomException
+      }.to raise_error(CustomException)
+    end
+
+    context "when called with an object instance," do
+      let(:object){CustomObjectReturner.new}
+
+      it "should raise the result of calling object.exception" do
+        expect{ raise object }.to raise_error(CustomException)
+      end
+
+      it "and a string, should raise the result of calling object.exception with a custom message" do
+        begin
+          raise object, "test"
+        rescue CustomException => e
+          expect(e.message).to eq("test")
+        end
+      end
+    end
+
+  end
+
+  describe "Kernel#raise" do
+    let(:style){:raise}
+    it_behaves_like "raising exceptions"
   end
 end
+
+
+class CustomException < Exception
+end
+
+class CustomObjectReturner
+  def exception(*args)
+    CustomException.new(*args)
+  end
+end
+
+
+#=======================
+#    HELPER METHODS
+#=======================
+
+def scope_test
+  result = 5
+  raise do |e|
+    e.set_recovery :change do |arg|
+      result = 7
+    end
+  end
+  result
+end
+
+
+
 
 
 #=======================
@@ -201,24 +299,24 @@ end
 
 def inner_test(style = :manual)
   core_test(style)
-  rescue Exception => e
-    result = raise(e) do |e|
-      e.set_recovery(:retry){}
-      # here we add 10 so we can ensure we are in fact, overriding
-      # the behavior for the same recovery as defined in core_test
-      e.set_recovery(:return_param2){|p|p+10}
-    end
-    retry if last_recovery == :retry
-    # here we add 10 so we can differentiate retries in `inner_test` from `core_test`
-    # we know we are in inner_test if our result is plus 10
-    result + 10
+rescue Exception => e
+  result = raise(e) do |e|
+    e.set_recovery(:retry){}
+  # here we add 10 so we can ensure we are in fact, overriding
+  # the behavior for the same recovery as defined in core_test
+    e.set_recovery(:return_param2){|p|p+10}
+  end
+  retry if last_recovery == :retry
+  # here we add 10 so we can differentiate retries in `inner_test` from `core_test`
+  # we know we are in inner_test if our result is plus 10
+  result + 10
 end
 
 
 def outer_test(style = :manual, &handler)
   inner_test(style)
-  rescue Exception => e
-    handler.call(e)
+rescue Exception => e
+  handler.call(e)
 end
 
 
@@ -261,14 +359,14 @@ def request_resource(name)
   url = "http://site.com/#{name}"
   rest_get(url)
   
-  rescue CredentialsExpiredException => e
-    # re-raise the exception but add a recovery so if they fix the credentials
-    # we can try again
-    raise (e) do |e|
-      e.set_recovery(:retry){true}
-    end
-    retry if last_recovery == :retry
-    result
+rescue CredentialsExpiredException => e
+  # re-raise the exception but add a recovery so if they fix the credentials
+  # we can try again
+  raise (e) do |e|
+    e.set_recovery(:retry){true}
+  end
+  retry if last_recovery == :retry
+  result
 end
 
 # This is the method that demonstrates how it all comes together.

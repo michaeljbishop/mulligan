@@ -32,11 +32,13 @@ void Init_mulligan(void)
   VALUE mMulligan = rb_define_module("Mulligan");
   VALUE mKernel = rb_define_module_under(mMulligan, "Kernel");
   rb_define_method(mKernel, "raise", rb_mulligan_raise, -1);
+  rb_define_method(mKernel, "fail", rb_mulligan_raise, -1);
 
 #if RUBY_API_VERSION_MAJOR < 2
   // completely replaces Ruby's version of raise.
   // In Ruby 2 we prepend (but don't call super)
   rb_define_global_function("raise", rb_mulligan_raise, -1);
+  rb_define_global_function("fail", rb_mulligan_raise, -1);
 #endif
 
   rb_require("continuation");
@@ -94,11 +96,22 @@ rb_mulligan_raise(int argc, VALUE *argv, VALUE self)
     VALUE context = Qnil;
     VALUE result = Qnil;
     VALUE is_empty = Qnil;
-    
+
     // -----------------------------------------------------------
     //  Get a reference to the Exception object
     // -----------------------------------------------------------
     VALUE e = rb_make_exception(argc, argv);
+
+    if (NIL_P(e)) {
+      // get whatever is in $!. I'm sure this is slow
+      e = rb_eval_string("$!");
+      // what I'd like to use reallu like to use
+//       e = rb_rubylevel_errinfo(); // internal ruby call, yet necessary
+    }
+
+    if (NIL_P(e)) {
+      e = rb_exc_new(rb_eRuntimeError, 0, 0);
+    }
 
     // -----------------------------------------------------------
     //  With the Exception in place, yield to the block
