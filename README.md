@@ -220,15 +220,22 @@ Changing the name to a noun subtracts that confusion (though arguably adds some 
 - [Restartable Exceptions](http://chneukirchen.org/blog/archive/2005/03/restartable-exceptions.html) (Christian Neukirchen)
 - [Common Lisp conditions](https://www.ruby-forum.com/topic/179474) (Ruby Forum)
 
+### Acknowledgements
+Thanks to [Ryan Angilly](https://twitter.com/angilly) of [Ramen](https://ramen.is) who graciously released the gem name 'mulligan' to be used with this project. If you've got a good software project, consider launching with them.
+
 ## Installation
 
-At the moment, 'mulligan' isn't submitted to RubyGems. However, you can still include it as a gem by adding this line to your application's Gemfile:
+Add this line to your application's Gemfile:
 
-    gem "mulligan", github: 'michaeljbishop/mulligan'
+    gem 'mulligan'
 
-Then execute:
+And then execute:
 
     $ bundle
+
+Or install it yourself as:
+
+    $ gem install mulligan
 
 ## Contributing
 
