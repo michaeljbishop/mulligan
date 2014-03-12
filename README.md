@@ -222,13 +222,11 @@ Changing the name to a noun subtracts that confusion (though arguably adds some 
 
 ## Installation
 
-At the moment, 'mulligan' isn't submitted to RubyGems. However, you can still include it as a gem by 
-
-Add this line to your application's Gemfile:
+At the moment, 'mulligan' isn't submitted to RubyGems. However, you can still include it as a gem by adding this line to your application's Gemfile:
 
     gem "mulligan", github: 'michaeljbishop/mulligan'
 
-And then execute:
+Then execute:
 
     $ bundle
 
