@@ -118,9 +118,8 @@ BTW, Here's your second chance to read [Beyond Exception Handling: Conditions an
 
 You've always known he (or she) knew Lisp and now you have something to ask him about.
 
-## Some Notes About the Ruby Implementation
-### Methods
-#### Kernel#raise
+## API
+### Kernel#raise
 1. `Kernel#raise` now has a return value! It is the value returned from the recovery block.
 2. `Kernel#raise` also yields the exception to a block. It does this since it's pretty common to have `Kernel#raise` create an exception for you and without this, you couldn't otherwise attach recoveries.
 
@@ -143,7 +142,7 @@ returns
  => "hello" 
 ```
 
-#### You can pass parameters to Exception#recover
+### You can pass parameters to Exception#recover
 The first parameter is always the id of the recovery. The rest will be passed directly to the recovery block. Building on the above example:
 
 ```ruby
@@ -165,7 +164,7 @@ returns
  => 5
 ```
 
-#### Your recovery can attach data to be read by the rescue clause
+### Your recovery can attach data to be read by the rescue clause
 You can pass an options hash to the `rescue` clause that is attached to your recovery. This is handy if you want to attach extra data about the recovery or the circumstances in which it is being raised. Pass them as the second parameter in `Exception#set_recovery`. You can retrieve them with `Exception#recovery_options`. Reserved keys are `:summary`, and `:discussion`
 ```ruby
 raise "Test" do |e|
@@ -185,7 +184,7 @@ rescue MisparsedEntryException => e
   ... read choice and execute ...
 ```
 
-#### Kernel#last_recovery
+### Kernel#last_recovery
 There is a new method: `Kernel#last_recovery` which will return the id of the last recovery invoked for the current thread. So you can do things like this:
 
 ```ruby
@@ -197,22 +196,24 @@ rescue Exception => e
 end
 ```
 
-### Mulliigan uses #callcc
-
-There is more than one way to do this. In the end, I wanted something that would fit very naturally into Ruby's existing Exception mechanism, yet offer as much of the benefits of Lisp's "restart" as I could.
-
-However, to make that happen, I had to use the `#callcc` method. I'm not completely sure how supported this is across different Ruby implementations. Additionally, I've read that it can be a rather slow method. It's important to note that if an exception is raised but does not have any attached recoveries, `#callcc` will not be called and the standard exception mechanism is used.
-
-### Ruby Support
+## Supported Rubies
 
 [![Build Status](https://travis-ci.org/michaeljbishop/mulligan.png?branch=master)](https://travis-ci.org/michaeljbishop/mulligan)
- Mulligan supports MRI versions 1.9.3 -> 2.1.1
+ Mulligan fully supports MRI versions 1.9.3 -> 2.1.1
+ 
+ Mulligan will degrade to standard exception handling on platforms that don't support `#callcc` (Issue [\#12](https://github.com/michaeljbishop/mulligan/issues/12) )
+
+## FAQ
 
 ### "Recovery"? What's wrong with "Restart"?
 
 I had to make a hard choice about naming the thing that allows an exception to be recovered from. "Restart" is the word used in Lisp, but because it is used as a verb and as a noun, it makes it hard to know what a Ruby method named `#restart` would do. Does it return a "restart" or does it execute a restart?
 
 Changing the name to a noun subtracts that confusion (though arguably adds some back for those coming from languages where the "restart" name is entrenched).
+
+### Will Mulligan let me resume from all exceptions?
+
+No. If an exception didn't have recoveries attached when it was raised, you will not be able to call them. It is incumbent on the code that raises the exception to add the recoveries so they can control the error-handling flow.
 
 ## Influences
 - [Beyond Exception Handling: Conditions and Restarts](http://www.gigamonkeys.com/book/beyond-exception-handling-conditions-and-restarts.html) -- (from [Practical Common Lisp](http://www.gigamonkeys.com/book/))
