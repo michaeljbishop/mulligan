@@ -1,4 +1,4 @@
-require_relative 'kernel_common'
+require "mulligan/kernel_common"
 
 module Mulligan
   module Kernel
