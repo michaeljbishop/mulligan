@@ -140,12 +140,12 @@ describe Mulligan do
         end
 
         it "should not raise an exception when setting a recovery" do
-          expect{Exception.new.set_recovery(:ignore){|p|}}.to_not raise_error
+          expect{Exception.new.set_recovery(:ignore){|p|p}}.to_not raise_error
         end
 
         it "should not set a recovery" do
           e = Exception.new
-          e.set_recovery(:ignore){|p|}
+          e.set_recovery(:ignore){|p|p}
           expect(e.has_recovery?(:ignore)).to be_false
         end
         
@@ -163,7 +163,7 @@ describe Mulligan do
         
         it "should list 0 recoveries" do
           e = Exception.new
-          e.set_recovery(:ignore){|p|}
+          e.set_recovery(:ignore){|p|p}
           expect(e.recovery_identifiers).to be_empty
         end
       end
@@ -177,7 +177,7 @@ describe Mulligan do
     if Mulligan.supported?
       it "shouldn't fail when recovering before raising" do
         t = Exception.new("Test Exception")
-        t.set_recovery(:ignore) {|p|}
+        t.set_recovery(:ignore) {|p|p}
         expect{t.recover(:ignore)}.to_not raise_error
       end
     end
@@ -189,7 +189,7 @@ describe Mulligan do
     if Mulligan.supported?
       it "should propgate recoveries when raising a pre-existing exception" do
         t = Exception.new("Test Exception")
-        t.set_recovery(:ignore) {|p|}
+        t.set_recovery(:ignore) {|p|p}
         begin
           raise t do |e|
             e.set_recovery(:return_param){|p|p}
@@ -335,7 +335,7 @@ def core_test(style)
   raise t do |e|
     e.set_recovery(:ignore){|p|p}
     e.set_recovery(:no_block)
-    e.set_recovery(:return_param, data: 5, summary: "Passes the parameter sent in as the value of the block."){|p|p}
+    e.set_recovery(:return_param, :data => 5, :summary => "Passes the parameter sent in as the value of the block."){|p|p}
     e.set_recovery(:return_all_params){|*p|next *p}
     e.set_recovery(:return_param2){|p|p}
   end
