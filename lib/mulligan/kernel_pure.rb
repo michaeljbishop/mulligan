@@ -14,7 +14,8 @@ module Mulligan
       super
     rescue Exception => e
       yield e if block_given?
-
+      super(e) unless Mulligan.supported?
+      
       # only use callcc if there are restarts otherwise re-raise it
       super(e) if e.send(:recoveries).empty?
       should_raise = true
@@ -27,5 +28,6 @@ module Mulligan
       super(e) if should_raise
       result
     end
+    
   end
 end

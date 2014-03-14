@@ -1,4 +1,5 @@
-require "mulligan/mulligan"
-require_relative 'kernel_common'
+if Mulligan.using_extension?
+  require "mulligan/mulligan"
+end
 
-# raise is implemented by the c-extension
+require_relative 'kernel_common'

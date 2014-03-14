@@ -1,12 +1,18 @@
 require "bundler/gem_tasks"
 require "rspec/core/rake_task"
 
-require "rake/extensiontask"
+RSpec::Core::RakeTask.new(:spec)
+task :default => :spec
 
-Rake::ExtensionTask.new "mulligan" do |ext|
-  ext.lib_dir = "lib/mulligan"
+def supports_mulligan?
+  defined?(RUBY_ENGINE) && RUBY_ENGINE == "ruby" && RUBY_VERSION >= "1.9.3"
 end
 
-RSpec::Core::RakeTask.new(:spec => :compile)
+if supports_mulligan?
+  require "rake/extensiontask"
 
-task :default => :spec
+  Rake::ExtensionTask.new "mulligan" do |ext|
+    ext.lib_dir = "lib/mulligan"
+  end
+  task :spec => :compile
+end

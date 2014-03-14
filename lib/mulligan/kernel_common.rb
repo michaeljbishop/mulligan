@@ -1,4 +1,4 @@
-require 'continuation'
+require 'continuation' if Mulligan.supported?
 
 module Mulligan
   module Kernel

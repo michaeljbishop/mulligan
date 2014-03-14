@@ -200,9 +200,20 @@ end
 ## Supported Rubies
 
 [![Build Status](https://travis-ci.org/michaeljbishop/mulligan.png?branch=master)](https://travis-ci.org/michaeljbishop/mulligan)
- Mulligan fully supports MRI versions 1.9.3 -> 2.1.1
- 
- Mulligan will degrade to standard exception handling on platforms that don't support `#callcc` (Issue [\#12](https://github.com/michaeljbishop/mulligan/issues/12) )
+Mulligan fully supports MRI versions 1.9.3 -> 2.1.1
+
+Mulligan will gracefully degrade to standard exception handling on other platforms.
+
+### Compatibility Notes
+
+- Code that ***raises*** exceptions and adds recoveries can always remain the same, regardless of the Ruby version.
+
+- Code that ***rescues*** exceptions will need to either:
+
+    - Call `Exception#recovery_exist?` before calling `Exception#recover`, which is good defensive programming.
+     - Conditionally execute recoveries based on `Mulligan.supported?`
+
+- If `Exception#recover` is called in a Ruby that doesn't fully support Mulligan, a `Mulligan::UnsupportedException` will be raised. This is to alert the author that execution is not going to jump back into the context where the exception was raised and the code will instead have to behave as if there were no mulligans (standard exception handling).
 
 ## FAQ
 

@@ -15,117 +15,158 @@ describe Mulligan do
     end
 
     it 'should correctly report included strategies' do
-      outer_test(style){|e|e.has_recovery?(:ignore)}.should be_true
+      outer_test(style){|e|e.has_recovery?(:ignore)}.should eq Mulligan.supported?
     end
 
     it 'should correctly report the list of recoveries' do
-      outer_test(style){|e|e.recovery_identifiers}.should == [:ignore, :return_param, :return_all_params, :return_param2, :retry]
+      outer_test(style){|e|e.recovery_identifiers}.should
+      Mulligan.supported? ?
+        [:ignore, :return_param, :return_all_params, :return_param2, :retry] :
+        be_empty
     end
 
-    it 'should raise a control exception when invoking a non-existent recovery' do
-      expect { outer_test(style){|e|e.recover :aaa} }.to raise_error(Mulligan::ControlException)
-    end
+    if Mulligan.supported?
+      context "when Mulligan is supported" do
+        it 'should raise a control exception when invoking a non-existent recovery' do
+          expect { outer_test(style){|e|e.recover :aaa} }.to raise_error(Mulligan::ControlException)
+        end
 
-    it 'should not raise an exception when invoking the ignore recovery' do
-      expect { outer_test(style){|e|e.recover :ignore} }.to_not raise_exception
-    end
+        it 'should not raise an exception when invoking the ignore recovery' do
+          expect { outer_test(style){|e|e.recover :ignore} }.to_not raise_exception
+        end
 
-    it 'should return the parameter sent when invoking the return_param recovery' do
-      result = outer_test(style){|e|e.recover(:return_param, 5)}
-      result.should be(5)
-    end
+        it 'should return the parameter sent when invoking the return_param recovery' do
+          result = outer_test(style){|e|e.recover(:return_param, 5)}
+          result.should be(5)
+        end
 
-    it 'should return all parameters sent when invoking the return_all_params recovery' do
-      result1, result2 = outer_test(style){|e|e.recover(:return_all_params, 5, 6)}
-      result1.should eq(5)
-      result2.should eq(6)
-    end
+        it 'should return all parameters sent when invoking the return_all_params recovery' do
+          result1, result2 = outer_test(style){|e|e.recover(:return_all_params, 5, 6)}
+          result1.should eq(5)
+          result2.should eq(6)
+        end
 
-    context "and follows the continutation to the correct raise" do
-      it 'should return the parameter sent when invoking the return_param recovery' do
-        result = outer_test(style){|e|e.recover(:return_param2, 5)}
-        result.should be(25)
-      end
-    end
+        context "and follows the continutation to the correct raise" do
+          it 'should return the parameter sent when invoking the return_param recovery' do
+            result = outer_test(style){|e|e.recover(:return_param2, 5)}
+            result.should be(25)
+          end
+        end
     
-    it "should ignore setting a recovery when passed no block" do
-      expect { outer_test(style){|e|e.recover :no_block} }.to raise_error(Mulligan::ControlException)
-    end
+        it "should ignore setting a recovery when passed no block" do
+          expect { outer_test(style){|e|e.recover :no_block} }.to raise_error(Mulligan::ControlException)
+        end
     
-    it "should retrieve the network request without an exception" do
-      @count_of_calls_before_failure = 2
+        it "should retrieve the network request without an exception" do
+          @count_of_calls_before_failure = 2
 
-      result = nil
-      expect { result = do_network_task }.to_not raise_error
-      expect(result).to eq(
-        {
-          :users    => "json_data",
-          :posts    => "json_data",
-          :comments => "json_data"
-        }
-      )
-    end
+          result = nil
+          expect { result = do_network_task }.to_not raise_error
+          expect(result).to eq(
+            {
+              :users    => "json_data",
+              :posts    => "json_data",
+              :comments => "json_data"
+            }
+          )
+        end
     
-    describe "recovery options" do
-      it "should not return the block" do
-        data = nil
-        outer_test(style) do |e|
-          data = e.recovery_options(:return_param)[:block]
-          e.recover(:return_param)
-        end
-        expect(data).to be_nil
-      end
+        describe "recovery options" do
+          it "should not return the block" do
+            data = nil
+            outer_test(style) do |e|
+              data = e.recovery_options(:return_param)[:block]
+              e.recover(:return_param)
+            end
+            expect(data).to be_nil
+          end
 
-      it "should not return the continuation" do
-        data = nil
-        outer_test(style) do |e|
-          data = e.recovery_options(:return_param)[:continuation]
-          e.recover(:return_param)
-        end
-        expect(data).to be_nil
-      end
+          it "should not return the continuation" do
+            data = nil
+            outer_test(style) do |e|
+              data = e.recovery_options(:return_param)[:continuation]
+              e.recover(:return_param)
+            end
+            expect(data).to be_nil
+          end
 
-      it "should pass data created in set_recovery" do
-        data = nil
-        outer_test(style) do |e|
-          data = e.recovery_options(:return_param)[:data]
-          e.recover(:return_param)
-        end
-        expect(data).to be(5)
-      end
+          it "should pass data created in set_recovery" do
+            data = nil
+            outer_test(style) do |e|
+              data = e.recovery_options(:return_param)[:data]
+              e.recover(:return_param)
+            end
+            expect(data).to be(5)
+          end
 
-      it "should pass summary created in set_recovery" do
-        data = nil
-        outer_test(style) do |e|
-          data = e.recovery_options(:return_param)[:summary]
-          e.recover(:return_param)
-        end
-        expect(data).to eq("Passes the parameter sent in as the value of the block.")
-      end
+          it "should pass summary created in set_recovery" do
+            data = nil
+            outer_test(style) do |e|
+              data = e.recovery_options(:return_param)[:summary]
+              e.recover(:return_param)
+            end
+            expect(data).to eq("Passes the parameter sent in as the value of the block.")
+          end
 
-      it "should be read-only" do
-        result = outer_test(style) do |e|
-          e.recovery_options(:return_param)[:new_entry] = 5
-          e.recover(:return_param, e)
+          it "should be read-only" do
+            result = outer_test(style) do |e|
+              e.recovery_options(:return_param)[:new_entry] = 5
+              e.recover(:return_param, e)
+            end
+            expect(result.recovery_options(:return_param)[:new_entry]).to be_nil
+          end
         end
-        expect(result.recovery_options(:return_param)[:new_entry]).to be_nil
-      end
 
-      if Exception.method_defined?(:cause)
-        it "should support the `#cause` method in the native extension" do
-          begin
-            raise "test"
-          rescue => e
+        if Exception.method_defined?(:cause)
+          it "should support the `#cause` method in the native extension" do
             begin
-              raise "test2"
-            rescue =>e
-             expect(e.cause.message).to eq "test"
+              raise "test"
+            rescue => e
+              begin
+                raise "test2"
+              rescue =>e
+               expect(e.cause.message).to eq "test"
+              end
             end
           end
         end
-      end
 
-      it "should support overriding a recovery and calling the inherited recovery"
+        it "should support overriding a recovery and calling the inherited recovery"
+      end
+    else
+      context "when Mulligan is unsupported" do
+        it "should raise an unsupported Exception when invoking a recovery" do
+          expect{Exception.new.recover(:ignore)}.to raise_error(Mulligan::UnsupportedException)
+        end
+
+        it "should not raise an exception when setting a recovery" do
+          expect{Exception.new.set_recovery(:ignore){|p|}}.to_not raise_error
+        end
+
+        it "should not set a recovery" do
+          e = Exception.new
+          e.set_recovery(:ignore){|p|}
+          expect(e.has_recovery?(:ignore)).to be_false
+        end
+        
+        it "should not execute the block yielded to raise" do
+          begin
+            test = true
+            raise "test" do
+              test = false
+            end
+          rescue
+          ensure
+            expect(test).to be_true
+          end
+        end
+        
+        it "should list 0 recoveries" do
+          e = Exception.new
+          e.set_recovery(:ignore){|p|}
+          expect(e.recovery_identifiers).to be_empty
+        end
+      end
     end
   end
     
@@ -133,25 +174,38 @@ describe Mulligan do
     let(:style){:manual}
     it_behaves_like "a Mulligan Condition"
 
-    it "shouldn't fail when recovering before raising" do
-      t = Exception.new("Test Exception")
-      t.set_recovery(:ignore) {|p|}
-      expect{t.recover(:ignore)}.to_not raise_error
+    if Mulligan.supported?
+      it "shouldn't fail when recovering before raising" do
+        t = Exception.new("Test Exception")
+        t.set_recovery(:ignore) {|p|}
+        expect{t.recover(:ignore)}.to_not raise_error
+      end
     end
   end
 
   shared_examples "raising exceptions" do
     it_behaves_like "a Mulligan Condition"
 
-    it "should propgate recoveries when raising a pre-existing exception" do
-      t = Exception.new("Test Exception")
-      t.set_recovery(:ignore) {|p|}
-      begin
-        raise t do |e|
-          e.set_recovery(:return_param){|p|p}
+    if Mulligan.supported?
+      it "should propgate recoveries when raising a pre-existing exception" do
+        t = Exception.new("Test Exception")
+        t.set_recovery(:ignore) {|p|}
+        begin
+          raise t do |e|
+            e.set_recovery(:return_param){|p|p}
+          end
+        rescue Exception => e
+          expect(e.has_recovery?:ignore).to be_true
         end
-      rescue Exception => e
-        expect(e.has_recovery?:ignore).to be_true
+      end
+
+      it "should modify variables in the binding of the raiser" do
+        begin
+          result = scope_test
+        rescue => e
+          e.recover :change
+        end
+        expect(result).to eq(7)
       end
     end
 
@@ -171,15 +225,6 @@ describe Mulligan do
       rescue => e
         expect(line_from_stack_string(e.backtrace[0])).to eq(line)
       end
-    end
-
-    it "should modify variables in the binding of the raiser" do
-      begin
-        result = scope_test
-      rescue => e
-        e.recover :change
-      end
-      expect(result).to eq(7)
     end
 
     context "when raise is called with no arguments" do
@@ -210,10 +255,10 @@ describe Mulligan do
       end
     end
 
-    it "should raise a TypeError when called with two strings" do
-      expect {
-        raise "hello", "world"
-      }.to raise_error(TypeError)
+    it "should raise an error when called with two strings" do
+      expect do
+        raise("hello", "world")
+      end.to raise_error
     end
     
     it "should, when called with a Exception subclassclass, raise that subclass" do

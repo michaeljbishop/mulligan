@@ -17,10 +17,16 @@ module Mulligan
     #                 :discussion - The complete documentation of this recovery. Please include a
     #                               description of the behavior, the return parameter, and any parameters
     #                               the recovery can take
-    def set_recovery(id, options={}, &block)
-      return if block.nil?
-      recoveries[id.to_sym] = options.merge(:block => block)
-      nil
+    if Mulligan.supported?
+      def set_recovery(id, options={}, &block)
+        return if block.nil?
+        recoveries[id.to_sym] = options.merge(:block => block)
+        nil
+      end
+    else
+      def set_recovery(id, options={}, &block)
+        nil
+      end
     end
     
     # Checks for the presence of a recovery
@@ -56,6 +62,8 @@ module Mulligan
     # @param params any additional parameters you want to pass to the recovery block
     # @return This doesn't actually matter because you can't retrieve it
     def recover(id, *params)
+      raise Mulligan::UnsupportedException unless Mulligan.supported?
+
       Thread.current[:__last_recovery__] = nil
       raise ControlException unless has_recovery?(id.to_sym)
       data = recoveries[id.to_sym]
@@ -65,6 +73,7 @@ module Mulligan
       end
       Thread.current[:__last_recovery__] = id
       data[:continuation].call(*data[:block].call(*params))
+      true
     end
   
   private

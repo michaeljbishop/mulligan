@@ -1,6 +1,11 @@
 language: ruby
 rvm:
-  - 1.9.3-p484
+  - 1.9.2
+  - 1.9.3
   - 2.0.0
   - 2.1.0
   - 2.1.1
+  - jruby-19mode
+  - jruby-18mode
+  - rbx-2.1.1
+  - rbx-2.0
