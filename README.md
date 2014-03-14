@@ -211,7 +211,7 @@ Mulligan will gracefully degrade to standard exception handling on other platfor
 - Code that ***rescues*** exceptions will need to either:
 
     - Call `Exception#recovery_exist?` before calling `Exception#recover`, which is good defensive programming.
-     - Conditionally execute recoveries based on `Mulligan.supported?`
+    - Conditionally execute recoveries based on `Mulligan.supported?`
 
 - If `Exception#recover` is called in a Ruby that doesn't fully support Mulligan, a `Mulligan::UnsupportedException` will be raised. This is to alert the author that execution is not going to jump back into the context where the exception was raised and the code will instead have to behave as if there were no mulligans (standard exception handling).
 
