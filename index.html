@@ -17,7 +17,7 @@
   <body>
 
       <header>
-        <h1><img src="images/mulligan-logo.png" height="93" width="264"></h1>
+        <h1>Mulligan</h1>
         <p>Restartable Exceptions for Ruby (like Lisp&#39;s &quot;Conditions&quot; and &quot;Restarts&quot;)</p>
       </header>
 
@@ -39,9 +39,9 @@
         <ul></ul>
       </nav>
       <section>
+        <p><a href="https://travis-ci.org/michaeljbishop/mulligan"><img src="https://travis-ci.org/michaeljbishop/mulligan.png?branch=master" alt="Build Status"></a></p>
 
-<h1>
-<a name="mulligan" class="anchor" href="#mulligan"><span class="octicon octicon-link"></span></a></h1>
+<p><img src="http://michaeljbishop.github.io/mulligan/images/mulligan-logo.png" height="155" width="440" alt="Mulligan"></p>
 
 <p>"In golf,...a stroke that is replayed from the spot of the previous stroke without penalty, due to an errant shot made on the previous stroke. The result is, as the hole is played and scored, as if the first errant shot had never been made." -- <a href="http://en.wikipedia.org/wiki/Mulligan_(games)#Mulligan_in_golf">Wikipedia</a></p>
 
@@ -170,13 +170,10 @@ AFTER RAISE
 <p>You've always known he (or she) knew Lisp and now you have something to ask him about.</p>
 
 <h2>
-<a name="some-notes-about-the-ruby-implementation" class="anchor" href="#some-notes-about-the-ruby-implementation"><span class="octicon octicon-link"></span></a>Some Notes About the Ruby Implementation</h2>
+<a name="api" class="anchor" href="#api"><span class="octicon octicon-link"></span></a>API</h2>
 
 <h3>
-<a name="methods" class="anchor" href="#methods"><span class="octicon octicon-link"></span></a>Methods</h3>
-
-<h4>
-<a name="kernelraise" class="anchor" href="#kernelraise"><span class="octicon octicon-link"></span></a>Kernel#raise</h4>
+<a name="kernelraise" class="anchor" href="#kernelraise"><span class="octicon octicon-link"></span></a>Kernel#raise</h3>
 
 <ol>
 <li>
@@ -200,8 +197,8 @@ AFTER RAISE
  =&gt; "hello" 
 </code></pre>
 
-<h4>
-<a name="you-can-pass-parameters-to-exceptionrecover" class="anchor" href="#you-can-pass-parameters-to-exceptionrecover"><span class="octicon octicon-link"></span></a>You can pass parameters to Exception#recover</h4>
+<h3>
+<a name="you-can-pass-parameters-to-exceptionrecover" class="anchor" href="#you-can-pass-parameters-to-exceptionrecover"><span class="octicon octicon-link"></span></a>You can pass parameters to Exception#recover</h3>
 
 <p>The first parameter is always the id of the recovery. The rest will be passed directly to the recovery block. Building on the above example:</p>
 
@@ -222,8 +219,8 @@ AFTER RAISE
  =&gt; 5
 </code></pre>
 
-<h4>
-<a name="your-recovery-can-attach-data-to-be-read-by-the-rescue-clause" class="anchor" href="#your-recovery-can-attach-data-to-be-read-by-the-rescue-clause"><span class="octicon octicon-link"></span></a>Your recovery can attach data to be read by the rescue clause</h4>
+<h3>
+<a name="your-recovery-can-attach-data-to-be-read-by-the-rescue-clause" class="anchor" href="#your-recovery-can-attach-data-to-be-read-by-the-rescue-clause"><span class="octicon octicon-link"></span></a>Your recovery can attach data to be read by the rescue clause</h3>
 
 <p>You can pass an options hash to the <code>rescue</code> clause that is attached to your recovery. This is handy if you want to attach extra data about the recovery or the circumstances in which it is being raised. Pass them as the second parameter in <code>Exception#set_recovery</code>. You can retrieve them with <code>Exception#recovery_options</code>. Reserved keys are <code>:summary</code>, and <code>:discussion</code></p>
 
@@ -243,8 +240,8 @@ AFTER RAISE
   <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="n">read</span> <span class="n">choice</span> <span class="ow">and</span> <span class="n">execute</span> <span class="o">.</span><span class="n">.</span><span class="o">.</span>
 </pre></div>
 
-<h4>
-<a name="kernellast_recovery" class="anchor" href="#kernellast_recovery"><span class="octicon octicon-link"></span></a>Kernel#last_recovery</h4>
+<h3>
+<a name="kernellast_recovery" class="anchor" href="#kernellast_recovery"><span class="octicon octicon-link"></span></a>Kernel#last_recovery</h3>
 
 <p>There is a new method: <code>Kernel#last_recovery</code> which will return the id of the last recovery invoked for the current thread. So you can do things like this:</p>
 
@@ -256,17 +253,31 @@ AFTER RAISE
 <span class="k">end</span>
 </pre></div>
 
+<h2>
+<a name="supported-rubies" class="anchor" href="#supported-rubies"><span class="octicon octicon-link"></span></a>Supported Rubies</h2>
+
+<p><a href="https://travis-ci.org/michaeljbishop/mulligan"><img src="https://travis-ci.org/michaeljbishop/mulligan.png?branch=master" alt="Build Status"></a>
+Mulligan fully supports MRI versions 1.9.3 -&gt; 2.1.1</p>
+
+<p>Mulligan will gracefully degrade to standard exception handling on other platforms.</p>
+
 <h3>
-<a name="mulliigan-uses-callcc" class="anchor" href="#mulliigan-uses-callcc"><span class="octicon octicon-link"></span></a>Mulliigan uses #callcc</h3>
+<a name="compatibility-notes" class="anchor" href="#compatibility-notes"><span class="octicon octicon-link"></span></a>Compatibility Notes</h3>
 
-<p>There is more than one way to do this. In the end, I wanted something that would fit very naturally into Ruby's existing Exception mechanism, yet offer as much of the benefits of Lisp's "restart" as I could.</p>
+<ul>
+<li><p>Code that <strong><em>raises</em></strong> exceptions and adds recoveries can always remain the same, regardless of the Ruby version.</p></li>
+<li>
+<p>Code that <strong><em>rescues</em></strong> exceptions will need to either:</p>
 
-<p>However, to make that happen, I had to use the <code>#callcc</code> method. I'm not completely sure how supported this is across different Ruby implementations. Additionally, I've read that it can be a rather slow method. It's important to note that if an exception is raised but does not have any attached recoveries, <code>#callcc</code> will not be called and the standard exception mechanism is used.</p>
-
-<h3>
-<a name="ruby-support" class="anchor" href="#ruby-support"><span class="octicon octicon-link"></span></a>Ruby Support</h3>
-<a href="https://travis-ci.org/michaeljbishop/mulligan"><img src="https://travis-ci.org/michaeljbishop/mulligan.png?branch=master" alt="Build Status"></a>
-<p>Mulligan supports MRI versions &gt;= 1.9.3</p>
+<ul>
+<li>Call <code>Exception#recovery_exist?</code> before calling <code>Exception#recover</code>, which is good defensive programming.</li>
+<li>Conditionally execute recoveries based on <code>Mulligan.supported?</code>
+</li>
+</ul>
+</li>
+<li><p>If <code>Exception#recover</code> is called in a Ruby that doesn't fully support Mulligan, a <code>Mulligan::UnsupportedException</code> will be raised. This is to alert the author that execution is not going to jump back into the context where the exception was raised and the code will instead have to behave as if there were no mulligans (standard exception handling).</p></li>
+</ul><h2>
+<a name="faq" class="anchor" href="#faq"><span class="octicon octicon-link"></span></a>FAQ</h2>
 
 <h3>
 <a name="recovery-whats-wrong-with-restart" class="anchor" href="#recovery-whats-wrong-with-restart"><span class="octicon octicon-link"></span></a>"Recovery"? What's wrong with "Restart"?</h3>
@@ -274,6 +285,11 @@ AFTER RAISE
 <p>I had to make a hard choice about naming the thing that allows an exception to be recovered from. "Restart" is the word used in Lisp, but because it is used as a verb and as a noun, it makes it hard to know what a Ruby method named <code>#restart</code> would do. Does it return a "restart" or does it execute a restart?</p>
 
 <p>Changing the name to a noun subtracts that confusion (though arguably adds some back for those coming from languages where the "restart" name is entrenched).</p>
+
+<h3>
+<a name="will-mulligan-let-me-resume-from-all-exceptions" class="anchor" href="#will-mulligan-let-me-resume-from-all-exceptions"><span class="octicon octicon-link"></span></a>Will Mulligan let me resume from all exceptions?</h3>
+
+<p>No. If an exception didn't have recoveries attached when it was raised, you will not be able to call them. It is incumbent on the code that raises the exception to add the recoveries so they can control the error-handling flow.</p>
 
 <h2>
 <a name="influences" class="anchor" href="#influences"><span class="octicon octicon-link"></span></a>Influences</h2>
@@ -287,12 +303,17 @@ AFTER RAISE
 <a href="http://chneukirchen.org/blog/archive/2005/03/restartable-exceptions.html">Restartable Exceptions</a> (Christian Neukirchen)</li>
 <li>
 <a href="https://www.ruby-forum.com/topic/179474">Common Lisp conditions</a> (Ruby Forum)</li>
-</ul><h2>
+</ul><h3>
+<a name="acknowledgements" class="anchor" href="#acknowledgements"><span class="octicon octicon-link"></span></a>Acknowledgements</h3>
+
+<p>Thanks to <a href="https://twitter.com/angilly">Ryan Angilly</a> of <a href="https://ramen.is">Ramen</a> who graciously released the gem name 'mulligan' to be used with this project. If you've got a good software project, consider launching with them.</p>
+
+<h2>
 <a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
 
 <p>Add this line to your application's Gemfile:</p>
 
-<pre><code>gem "mulligan"
+<pre><code>gem 'mulligan'
 </code></pre>
 
 <p>And then execute:</p>
@@ -300,7 +321,7 @@ AFTER RAISE
 <pre><code>$ bundle
 </code></pre>
 
-<p>Or install it yourself with:</p>
+<p>Or install it yourself as:</p>
 
 <pre><code>$ gem install mulligan
 </code></pre>
@@ -314,7 +335,10 @@ AFTER RAISE
 <li>Commit your changes (<code>git commit -am 'Add some feature'</code>)</li>
 <li>Push to the branch (<code>git push origin my-new-feature</code>)</li>
 <li>Create new Pull Request</li>
-</ol>
+</ol><h2>
+<a name="homepage" class="anchor" href="#homepage"><span class="octicon octicon-link"></span></a>Homepage</h2>
+
+<p><a href="http://michaeljbishop.github.io/mulligan/">http://michaeljbishop.github.io/mulligan/</a></p>
       </section>
       <footer>
         <p>Project maintained by <a href="https://github.com/michaeljbishop">michaeljbishop</a></p>
