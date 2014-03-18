@@ -5,10 +5,14 @@ include Mulligan
 class RootRecovery < Recovery
 end
  
-class SubclassRecovery < RootRecovery
+class ReturningAllParametersRecovery < Recovery
+  attr_reader :arguments
+  def initialize(*args)
+    @arguments = args
+  end
 end
  
-class ReturningAllParametersRecovery < Recovery
+class SubclassRecovery < RootRecovery
 end
  
 describe Mulligan do

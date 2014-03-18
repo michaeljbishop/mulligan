@@ -16,12 +16,6 @@ module Mulligan
   class Recovery
 
     attr_accessor :message
-    attr_accessor :arguments
-    
-    # Creates a Recovery with arguments to be processed in a rescue clause
-    def initialize(*arguments)
-      self.arguments = arguments
-    end
     
     # Executes the recovery which repairs the Exception at the site of the
     # '#raise' call which created the Exception
