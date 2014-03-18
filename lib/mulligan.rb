@@ -12,9 +12,12 @@ module Mulligan
   end
 end
 
-require "mulligan/version"
 require "mulligan/condition"
 require "mulligan/kernel"
+require "mulligan/collector"
+require "mulligan/recovery"
+require "mulligan/ignoring_recovery"
+require "mulligan/version"
 
 class Exception
   include Mulligan::Condition
