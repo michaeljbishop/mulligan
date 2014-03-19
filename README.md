@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/michaeljbishop/mulligan.png?branch=master)](https://travis-ci.org/michaeljbishop/mulligan)
 
-<img src="http://michaeljbishop.github.io/mulligan/images/mulligan-logo.png" height="155" width="440" alt="Mulligan">
+<img src="images/mulligan-logo.png" height="159" width="396" alt="Mulligan">
 
 "In golf, a mulligan is a stroke that is replayed from the spot of the previous stroke without penalty, due to an errant shot made on the previous stroke. The result is, as the hole is played and scored, as if the first errant shot had never been made." -- [Wikipedia](http://en.wikipedia.org/wiki/Mulligan_(games)#Mulligan_in_golf)
 
@@ -268,6 +268,15 @@ Or install it yourself as:
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
+
+## Add Mulligans to your API
+
+Show off your Mulligans! Feel free to add the following html to your repo...
+
+<textarea readonly="readonly" cols="50">&lt;a href=&quot;http://github.com/michaeljbishop/mulligan&quot;&gt;&lt;img src=&quot;images/mulligan-badge.png&quot; height=&quot;47&quot; width=&quot;66&quot; alt=&quot;Mulligan&quot;&gt;&lt;/a&gt;</textarea>
+
+<a href="http://github.com/michaeljbishop/mulligan"><img src="images/mulligan-badge.png" height="47" width="66" alt="Mulligan"></a>
+
 
 ## Homepage
 
