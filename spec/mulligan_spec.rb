@@ -161,10 +161,15 @@ describe Mulligan do
           when Recovery.new("This is my recovery")
           else ; raise ; end
         rescue => e
-          expect(e.recoveries.inspect).to eq "" +
-"Mulligan::Recovery\n"+
-"------------------\n" +
-"This is my recovery\n"
+          if Mulligan.supported?
+           expect(e.recoveries.inspect).to eq <<END
+Mulligan::Recovery
+------------------
+This is my recovery
+END
+          else
+            expect(e.recoveries.inspect).to eq("")
+          end
         end
       end
 
