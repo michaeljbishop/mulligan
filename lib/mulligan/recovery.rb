@@ -21,8 +21,8 @@ module Mulligan
     # '#raise' call which created the Exception
     # @param [Array] arguments arguments passed back to the recovery code
     # to be processed
-    def invoke(*arguments)
-      @continuation.call(*arguments) unless @continuation.nil?
+    def invoke(*args)
+      @continuation.call(*args) unless @continuation.nil?
     end
     
     # Describes the recovery so that a human could make an intelligent choice if

@@ -142,7 +142,18 @@ describe Mulligan do
         expect(result).to Mulligan.supported? ? eq(a) : be_a(RuntimeException)
       end
 
-      it 'should receive arguments specified in recover statement'
+      it 'should receive arguments specified in recover statement' do
+        result = begin
+          case r = recovery
+          when Recovery
+            r.argv
+          else ; raise ; end
+        rescue => e
+          next e unless Mulligan.supported?
+          recover Recovery, 5, 6
+        end
+        expect(result).to Mulligan.supported? ? eq([5,6]) : be_a(RuntimeException)
+      end
       
     end
 

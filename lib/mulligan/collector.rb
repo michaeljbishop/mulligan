@@ -6,11 +6,11 @@ module Mulligan
   # of recoveries to be attached to an Exception class that can
   # be processed in a rescue.
   class Collector
-    attr_reader :args
+    attr_reader :argv
 
     def initialize
       @recoveries = {}
-      @args = []
+      @argv = []
     end
     
   private
@@ -26,7 +26,7 @@ module Mulligan
     end
 
     def __set_args__(args)
-      @args = args
+      @argv = args
     end
   end
 
@@ -35,7 +35,7 @@ module Mulligan
       return super unless Mulligan.supported?
       return super unless other.is_a?(Mulligan::Collector)
       callcc do |c|
-        @continuation = proc do |recovery, *args|
+        @continuation = proc do |*args|
           other.__send__(:__set_args__, args) 
           c.call(true)
         end
