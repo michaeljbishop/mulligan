@@ -17,6 +17,10 @@ module Mulligan
 
     attr_accessor :message
     
+    def initialize(message = nil)
+      self.message = message
+    end
+    
     # Executes the recovery which repairs the Exception at the site of the
     # '#raise' call which created the Exception
     # @param [Array] arguments arguments passed back to the recovery code
@@ -34,7 +38,7 @@ module Mulligan
     protected
     
     def default_message
-      "default"
+      "[no message]"
     end
   end
 end

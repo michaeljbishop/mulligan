@@ -154,9 +154,21 @@ describe Mulligan do
         end
         expect(result).to Mulligan.supported? ? eq([5,6]) : be_a(RuntimeException)
       end
-      
-    end
 
+      it '#recoveries.inspect' do
+        begin
+          case recovery
+          when Recovery.new("This is my recovery")
+          else ; raise ; end
+        rescue => e
+          expect(e.recoveries.inspect).to eq <<END
+Mulligan::Recovery
+------------------
+This is my recovery
+END
+        end
+      end
+
+    end
   end
-  
 end

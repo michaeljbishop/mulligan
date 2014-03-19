@@ -3,7 +3,22 @@ module Mulligan
   
     # @return The list of recoveries available with this Exception
     def recoveries
-      __recoveries__.values
+      v = __recoveries__.values
+      # define an #inspect method on the array for use in Pry
+      singleton = class << v ; self end
+      r = __recoveries__
+      singleton.send :define_method, :inspect do
+        @inspect_message ||= begin
+          s = StringIO.new
+          r.each do |klass, instance|
+            s.puts "#{klass.name}\n" +
+            "-" * klass.name.length + "\n" +
+            instance.message + "\n"
+          end
+          s.string
+        end
+      end
+      v
     end
 
   private
