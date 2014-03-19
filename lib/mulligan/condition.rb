@@ -1,97 +1,54 @@
 module Mulligan
-
-  # An exception that is thrown when invoking a non-existent recovery.
-  class ControlException < Exception ; end
-
   module Condition
-
-    # Creates or replaces a recovery strategy.
-    # 
-    # @param [String or Symbol] id the key to reference the recovery later
-    # @param [Hash] options specifies a token for this recovery that can later be
-    #               retrieved. Can only be set once. See {#recovery_options}
-    #               Reserved Keys are as follows:
-    #                 :data       - Use this as a parameter to send a piece of data to rescuers to use
-    #                               as they determine their strategy for recovering.
-    #                 :summary    - A short, one-line description of this recovery
-    #                 :discussion - The complete documentation of this recovery. Please include a
-    #                               description of the behavior, the return parameter, and any parameters
-    #                               the recovery can take
-    if Mulligan.supported?
-      def set_recovery(id, options={}, &block)
-        return if block.nil?
-        recoveries[id.to_sym] = options.merge(:block => block)
-        nil
-      end
-    else
-      def set_recovery(id, options={}, &block)
-        nil
-      end
-    end
-    
-    # Checks for the presence of a recovery
-    # 
-    # @param [String or Symbol] id the key for the recovery
-    # @return [Boolean] whether or not a recovery exists for this id
-    def has_recovery?(id)
-      recoveries.has_key?(id.to_sym)
-    end
-    
-    # Retrieves the options specified when a recovery was made
-    # 
-    # @param [String or Symbol] id the key for the recovery
-    # @return [Hash] The options set on this recovery
-    def recovery_options(id)
-      return nil unless has_recovery?(id.to_sym)
-      recoveries[id.to_sym].dup.reject{|k,v| [:block, :continuation].include? k}
-    end
   
-    # Retrieves all the identifiers for available recoveries
-    # 
-    # @return [Enumerable] The identifiers for all the recoveries
-    def recovery_identifiers
-      recoveries.keys
-    end
-  
-    # Executes the recovery.
-    # This actually places the stack back to just after the `#raise` that brought
-    # us to this `rescue` clause. Then the recovery block is executed and the program
-    # continues on.
-    # 
-    # @param [String or Symbol] id the key for the recovery
-    # @param params any additional parameters you want to pass to the recovery block
-    # @return This doesn't actually matter because you can't retrieve it
-    def recover(id, *params)
-      raise Mulligan::UnsupportedException unless Mulligan.supported?
-
-      Thread.current[:__last_recovery__] = nil
-      raise ControlException unless has_recovery?(id.to_sym)
-      data = recoveries[id.to_sym]
-      if data[:continuation].nil?
-        $stderr.puts "Cannot invoke restart #{id}. Must first raise this exception: '#{self.inspect}'"
-        return
-      end
-      Thread.current[:__last_recovery__] = id
-      data[:continuation].call(*data[:block].call(*params))
-      true
-    end
-  
-  private
-
+    # @return The list of recoveries available with this Exception
     def recoveries
-      @recoveries ||= {}
+      v = __recoveries__.values
+      # define an #inspect method on the array for use in Pry
+      singleton = class << v ; self end
+      r = __recoveries__
+      singleton.send :define_method, :inspect do
+        @inspect_message ||= begin
+          s = StringIO.new
+          r.each do |klass, instance|
+            s.puts "#{klass.name}\n" +
+            "-" * klass.name.length + "\n" +
+            instance.message + "\n"
+          end
+          s.string
+        end
+      end
+      v
     end
 
-    def __set_continuation__
-      continuation = Proc.new
-      # the the continuation for any recoveries that are not yet assigned one
-      # It's important not to overwrite the existing continuations because a recovery
-      # should return to the place it was raised, always.
-      recoveries.each do |key, r|
-        next if r.has_key? :continuation
-        r[:continuation] = continuation
-      end
+  private
+    def __set_recovery__(instance)
+      # we want to make sure we have one entry per recovery class and the
+      # recoveries closest to the error take priority.
+      return if __recoveries__.has_key? instance.class
+      __recoveries__[instance.class] = instance
     end
+
+    def __chosen_recovery__(choice)
+      # Ruby's Hash has ordered keys.
+      # The first keys will have the deepest continuations which are closest to the
+      # error
+      return nil if choice.nil?
+      __recoveries__.each do |k,v|
+        return v if v.kind_of?(choice)
+      end
+      nil
+    end
+
+    def __execute_recovery__(choice = nil, *args)
+      r = __chosen_recovery__(choice)
+      r.invoke(*args) unless r.nil?
+    end
+
+    def __recoveries__
+      @recoveries ||= {} # class => instance
+    end
+    
   end
 end
 

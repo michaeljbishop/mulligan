@@ -6,7 +6,27 @@
 
 ## Usage
 
-When rescuing an exception, the Mulligan gem allows you to execute some recovery code, then continue your program as if the exception had never been thrown in the first place
+### Two Stories
+
+#### The Spy Before Radios Were Invented
+
+> Once upon a time, there was a spy who had to infiltrate a 17 floor building, each new floor thick with guards. On the top floor was a safe to which he was given a combination. The safe would blow up if the wrong combination was used so he had to be careful. He successfully arrived at the safe after sneaking through all the floors and then he realized on his notes, the combination he was given was "66-99-66".
+>
+> To his dismay, he couldn't tell if he was reading it upside-down, and because radios hadn't yet been invented, Intelligence couldn't be contacted and not knowing what to do, he bailed on the mission by jumping out the window and was rescued on the ground by the allies. They told him he was holding the combination upside-down but now he'd have to again go through all 17 floors.
+
+This the current state of Ruby exception handling. Once an exception is raised, you "abort the mission" and jump out the window where you are rescued. But then you have to start the mission again.
+
+#### The Spy After Radios Were Invented
+
+Here's the story again, but let's pretend radios now exist:
+
+> Once upon a time, there was a spy ... yada yada yada... It was then that he realized the combination he was given was 66-99-66.
+>
+> ***Because this mission now includes radios***, he was able to call intelligence, tell them what was happening and they told him he was holding the note upside-down. He then continued the mission by turning the note right-side-up and opening the safe.
+
+The Mulligan gem adds to your exception handling, the radio from the second story. The Ruby `rescue` clause is like 'Intelligence' who receives the call (as an Exception instance). But attached to that Exception instance are 'recovery objects' which contain data about how to solve the problem. By invoking a recovery object, the code continues to exit without the mission aborting.
+
+### Code Example
 
 Here's a very simple contrived example:
 ```ruby
@@ -14,22 +34,23 @@ Here's a very simple contrived example:
  2 
  3 def method_that_raises
  4   puts "RAISING"
- 5   raise "You can ignore this" do |e|
- 6     e.set_recovery :ignore do
- 7       puts "IGNORING"
- 8     end
- 9   end
-10   puts "AFTER RAISE"
-11 end
-12
-13 def calling_method
-14   method_that_raises
-15   "SUCCESS"
-16   rescue Exception => e
-17     puts "RESCUED"
-18     e.recover :ignore
-19     puts "HANDLED"
-20 end
+ 5   case recovery
+ 6   when IgnoringRecovery
+ 7     puts "IGNORING"
+ 8   else
+ 9     raise "You can ignore this"
+10   end
+11   puts "AFTER RAISE"
+12 end
+13
+14 def calling_method
+15   method_that_raises
+16   "SUCCESS"
+17 rescue Exception => e
+18   puts "RESCUED"
+19   recover IgnoringRecovery
+10   puts "HANDLED"
+21 end
 ```
 
 Running this at the REPL shows:
@@ -43,34 +64,29 @@ AFTER RAISE
  => "SUCCESS" 
 ```
 
-### Yeah... wait, shouldn't we see "HANDLED" in that output?!
+### How come we didn't see "HANDLED" in that output?
 
 Here's what happened in detail:
 
-1. `#method_that_raises` is called from `#calling_method` (line 14)
-2. `#method_that_raises` raises an exception *but* before it is raised, a "recovery" can be added to the exception (line 6) in the block passed to `#raise`. (The exception is the parameter 'e' passed to the `#raise` block)
-3. The exception is then raised (line 5) and rescued (line 16)
-4. The "recovery" on the exception is called (line 18) which executes the statement in the recovery block (defined on line 7).
-5. Since the exception has recovered, control taks us back to the point *immediately after the block passed to* `#raise` (line 10), continuing as if `#raise` hadn't been called in the first place.
-6. The method exits (line 11) and we return to line 15 as if we never saw the exception.
-7. We exit the method because there's no exception to rescue (line 20). The last value in the function was "SUCCESS" so that is returned.
+1. `#method_that_raises` is called from `#calling_method` (line 15)
+2. `#method_that_raises` raises an exception *but* before it is raised, a "recovery" can be added to the exception (line 6). That 'when' statement actually creates a an instance of `IgnoringRecovery`.
+3. The exception is then raised (line 9) and rescued (line 17)
+4. The "recovery" on the exception is called (line 19) which takes program execution back to line 7.
+5. Now, we are inside code that has succeeded the test in then `when` of line 6. Now it hits the `else` clause and skips the `#raise`
+6. The method exits (line 12) and we return to line 16 as if we never saw the exception.
+7. We exit the method because there's no exception to rescue (line 21). The last value in the function was "SUCCESS" so that is returned.
 
-### I see what you did there. That's cool, but why should I care?
+### Use Cases
 
-You should care because your `rescue` statement is likely to be far from the `raise` in your program's execution and the further away it is, the harder it is to fix the error intelligently. It's even harder if that `raise` comes from a library you are calling.
+The truth is, often when we throw an exception in code, we probably could actually continue if we just knew what to do. Specifying recoveries allows you to suggest some options to the rescuing code.
 
-Specifying recoveries on the exception allows the lower-level code to offer strategies for fixing the exception without the higher-level code needing to know the internals of those strategies.
+Not only that, you can apply a recovery strategy to large parts of code by handling exceptions at a high level and recovering from them.
 
-Better yet, it offers the ability to "go back in time" [Groundhog Day](http://en.wikipedia.org/wiki/Groundhog_Day_(film))-style, but this time, your code knows how to play the piano, how to sculpt ice, and how to speak French.
+From the Dylan Language Manual:
 
-Find your favorite chair and read these:
+> A condition is an object used to locate and provide information to a handler. A condition represents a situation that needs to be handled. Examples are errors, warnings, and attempts to recover from errors.
 
-- [Dylan Reference Manual - Conditions - Background](http://opendylan.org/books/drm/Conditions_Background)
-- [Beyond Exception Handling: Conditions and Restarts](http://www.gigamonkeys.com/book/beyond-exception-handling-conditions-and-restarts.html) (keep in mind the "restarts" are what we are calling "recoveries").
-
-### This *seems* like a good thing, but what can I do with it?
-
-Here are some use cases:
+("condition" is what we are calling "exception" in Ruby)
 
 #### Fixing network connection errors
 
@@ -85,8 +101,12 @@ def post_resource(object)
   ... assemble url and data...
   http_post(url, data)
   rescue Exception => e
-    raise(e){|e|e.set_recovery(:retry){}}
-    retry if last_recovery == :retry
+    case recovery
+    when RetryingRecovery
+      retry
+    else
+      raise e
+    end
 end
 
 def save_resources
@@ -96,16 +116,16 @@ def save_resources
 
   rescue CredentialsExpiredException => e
     ... fix credentials...
-    e.recover :retry
+    recover RetryingRecovery
   rescue ConnectionFailedException => e
     ... switch from wifi to cellular...
-    e.recover :retry
+    recover RetryingRecovery
 end
 ```
 
 #### Screen Scraping (in Dylan)
 
-[The maling list post](https://groups.google.com/d/msg/comp.lang.dylan/gszO7d7BAok/zqVbQlNDKzAJ)
+[I'm glad I used Dylan (comp.lang.dylan)](https://groups.google.com/d/msg/comp.lang.dylan/gszO7d7BAok/zqVbQlNDKzAJ)
 
 This is going to be inherently messy and for a long-running program like this, potentially painful to restart if the data is found to be incorrect. Much better to just put in some recoveries and choose from them if errors are found.
 
@@ -113,107 +133,80 @@ This is going to be inherently messy and for a long-running program like this, p
 
 You might write a parser to read XML or a log file format and it might encounter malformed entries. You can make that low-level parser code much more reusable if you specify a few recoveries in the raised exceptions. Higher level code will have many more choices to handle errors.
 
-BTW, Here's your second chance to read [Beyond Exception Handling: Conditions and Restarts](http://www.gigamonkeys.com/book/beyond-exception-handling-conditions-and-restarts.html). There's a log file parsing example in there.
-
 #### Ask your friendly Lisp coder. They've been solving these problems for years.
 
 You've always known he (or she) knew Lisp and now you have something to ask him about.
 
-## API
-### Kernel#raise
-1. `Kernel#raise` now has a return value! It is the value returned from the recovery block.
-2. `Kernel#raise` also yields the exception to a block. It does this since it's pretty common to have `Kernel#raise` create an exception for you and without this, you couldn't otherwise attach recoveries.
+## Basic API
+### Kernel#recovery
+
+#### To Start A Case Statement
+
+`recovery` is used at the beginning of a `case` structure to indicate that each `when` clause is defining a `Recovery` instance to be attached to the next raised `Exception` instance.
+
+Here is the structure for using it:
 
 ```ruby
-def test
-  # (result is explicit for this example)
-  result = raise "Test" do |e|              # yields Exception to the block
-    e.set_recovery(:test_return){"hello"}   # recovery block returns a string
-  end
-  result
+case recovery
+when <recovery_class>           # or
+  ...code
+when <recovery_class>.new(...)  # or
+  ...code
+when <method_or_statement_that_returns_recovery_instance_or_class>
+  ...code
+else
+  raise <exception>
+end
+```
+
+The structure for this has to be quite strict. You *have* to put the raise inside the `else` and not before. (For more explanation, see the Appendix)
+
+#### To Retrieve a Recovery
+
+You can also call `recovery(<recovery_class>)` when inside a rescue statement to see if there is a recovery attached to the exception that fits that class.
+
+```ruby
 rescue Exception => e
-  e.recover :test_return
-end
+  recover(IgnoringRecovery) unless recovery(IgnoringRecovery).nil?
 ```
 
-returns 
+### Kernel#recover
 
-```
-2.0.0-p353 :012 > test
- => "hello" 
-```
-
-### You can pass parameters to Exception#recover
-The first parameter is always the id of the recovery. The rest will be passed directly to the recovery block. Building on the above example:
+Inside a `rescue` clause, this invokes the recovery object. There is no return value from this. Code execution now proceeds back down into the stack to to the location in the case statement that matches the recovery class.
 
 ```ruby
-def test
-  # (result is explicit for this example)
-  result = raise "Test" do |e|
-    e.set_recovery(:test_return){|p|p} # pass back whatever is passed in
-  end
-  result
 rescue Exception => e
-  e.recover :test_return, 5
-end
+  recover(IgnoringRecovery) unless recovery(IgnoringRecovery).nil?
 ```
 
-returns 
+Also note that you can pass arguments which can be retrieved by the code implementing the `Recovery`.
 
-```
-2.0.0-p353 :012 > test
- => 5
-```
+### Mulligan::Recovery
 
-### Your recovery can attach data to be read by the rescue clause
-You can pass an options hash to the `rescue` clause that is attached to your recovery. This is handy if you want to attach extra data about the recovery or the circumstances in which it is being raised. Pass them as the second parameter in `Exception#set_recovery`. You can retrieve them with `Exception#recovery_options`. Reserved keys are `:summary`, and `:discussion`
-```ruby
-raise "Test" do |e|
-  summary = "Replaces the misparsed entry with one you specify."
-  e.set_recovery(:replace_value, :summary => summary){|p|p}
-end
-```
+`Mulligan::Recovery` is the base class of all recoveries. Use this in the same way you use the `Exception` hierarchy, but for recoveries. You can define your own subclasses with different properties that can be read by the `rescue` clauses.
 
-To demonstrate this, here's a rescue statement. The rescue simply prints out the description which is not really useful as a rescue statement, but it's an example of how a REPL might output to the user a list of recoveries to choose from and the details of what they do.
+#### 'message' attribute
+This is a human-readable description of what the `Recovery` does. It can be set at the time of raising, or if it's not set, will return `#default_message`
 
-```ruby
-rescue MisparsedEntryException => e
-  $stderr.puts "Choose a recovery:"
-  e.recovery_identifiers.each do |id|
-    $stderr.puts "  #{id}: - #{e.recovery_options(id)[:summary]}"
-  end
-  ... read choice and execute ...
-```
-
-### Kernel#last_recovery
-There is a new method: `Kernel#last_recovery` which will return the id of the last recovery invoked for the current thread. So you can do things like this:
-
-```ruby
-begin
-  ... some code ...
-rescue Exception => e
-  raise(e){|e|e.set_recovery(:retry){}}
-  retry if last_recovery == :retry
-end
-```
+#### #default_message
+It's very important that you specify the `#default_message` method in your subclass. If your exception bubbles to the top-level within Pry, you can inspect the attached `Recovery` instances and execute them yourself. Without that `#default_message` method, you'll have no idea what a given Recovery will do.
 
 ## Supported Rubies
 
 [![Build Status](https://travis-ci.org/michaeljbishop/mulligan.png?branch=master)](https://travis-ci.org/michaeljbishop/mulligan)
 Mulligan fully supports MRI versions 1.9.3 -> 2.1.1
 
-Mulligan will gracefully degrade to standard exception handling on other platforms.
+Mulligan will gracefully degrade to standard exception handling on other platforms. Though the API will be there, no recoveries will be attached to Exceptions.
 
-### Compatibility Notes
+- If `Kernel#recover` is called in a Ruby that doesn't fully support Mulligan, it will be ignored and code execution will continue. This allows you to first try a recovery and after that, write the code that you would do before you had Mulligan.
 
-- Code that ***raises*** exceptions and adds recoveries can always remain the same, regardless of the Ruby version.
-
-- Code that ***rescues*** exceptions will need to either:
-
-    - Call `Exception#recovery_exist?` before calling `Exception#recover`, which is good defensive programming.
-    - Conditionally execute recoveries based on `Mulligan.supported?`
-
-- If `Exception#recover` is called in a Ruby that doesn't fully support Mulligan, a `Mulligan::UnsupportedException` will be raised. This is to alert the author that execution is not going to jump back into the context where the exception was raised and the code will instead have to behave as if there were no mulligans (standard exception handling).
+```ruby
+rescue TimeoutException => e
+  # retry the operation
+  recover(RetryingRecovery)
+  # if we get here, it's because there is no RetryingRecovery, or we don't have Mulligan
+  raise e
+```
 
 ## FAQ
 
@@ -235,6 +228,25 @@ No. If an exception didn't have recoveries attached when it was raised, you will
 
 ### Acknowledgements
 Thanks to [Ryan Angilly](https://twitter.com/angilly) of [Ramen](https://ramen.is) who graciously released the gem name 'mulligan' to be used with this project. If you've got a good software project, consider launching with them.
+
+## Further Reading
+- [Dylan Reference Manual - Conditions - Background](http://opendylan.org/books/drm/Conditions_Background)
+
+## Appendix
+
+I had to pull off some tricks to achieve the `case` structure in Mulligan. If I had more control over the Ruby Language, my preferred syntax for specifying recoveries would be:
+
+```ruby
+raise [Exception [, message [, backtrace]]]
+  # ... code that is always executed during a recovery
+recovery <Recover class>
+  # ... recovery code
+recovery <Recover class> => args
+  # ... recovery code that uses the args passed back
+end
+```
+
+
 
 ## Installation
 
