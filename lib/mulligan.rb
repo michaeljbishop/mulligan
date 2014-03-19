@@ -7,9 +7,6 @@ module Mulligan
   def self.using_extension?
     supported?
   end
-
-  class UnsupportedException < Exception
-  end
 end
 
 require "mulligan/condition"
