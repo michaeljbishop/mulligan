@@ -273,9 +273,9 @@ Or install it yourself as:
 
 Show off your Mulligans! Feel free to add the following html to your repo...
 
-<textarea readonly="readonly" cols="50">&lt;a href=&quot;http://github.com/michaeljbishop/mulligan&quot;&gt;&lt;img src=&quot;images/mulligan-badge.png&quot; height=&quot;47&quot; width=&quot;66&quot; alt=&quot;Mulligan&quot;&gt;&lt;/a&gt;</textarea>
-
 <a href="http://github.com/michaeljbishop/mulligan"><img src="images/mulligan-badge.png" height="47" width="66" alt="Mulligan"></a>
+
+    <a href="http://github.com/michaeljbishop/mulligan"><img src="images/mulligan-badge.png" height="47" width="66" alt="Mulligan"></a>
 
 
 ## Homepage
