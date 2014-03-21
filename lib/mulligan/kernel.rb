@@ -29,7 +29,7 @@ module Mulligan
     #         in a case statement
     def recovery(choice = nil)
       return __start_case__ if choice.nil?
-      return nil if $!.nil?
+      raise "No Current Exception" if $!.nil?
       $!.send(:__chosen_recovery__, choice)
     end
 
@@ -39,6 +39,7 @@ module Mulligan
     end
 
     def __execute_recovery__(choice = nil, *args)
+      raise "No Current Exception" if $!.nil?
       # find the best match for the chosen recovery
       $!.__send__(:__execute_recovery__, choice, *args)
     end

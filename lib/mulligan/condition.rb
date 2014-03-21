@@ -8,15 +8,12 @@ module Mulligan
       singleton = class << v ; self end
       r = __recoveries__
       singleton.send :define_method, :inspect do
-        @inspect_message ||= begin
-          s = StringIO.new
-          r.each do |klass, instance|
-            s.puts "#{klass.name}\n" +
-            "-" * klass.name.length + "\n" +
-            instance.message + "\n"
-          end
-          s.string
-        end
+        @inspect_message ||= r.collect do |klass, instance|
+          s = "#{klass.name}\n" +
+          "-" * klass.name.length + "\n" +
+          instance.summary + "\n"
+          s << instance.discussion + "\n" unless instance.discussion.nil?
+        end.join("\n")
       end
       v
     end

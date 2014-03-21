@@ -13,12 +13,33 @@ module Mulligan
   #
   # Recovery objects can also carry arguments from the raise site, with the intention
   # of passing information to a rescue clause.
+  #
+  # Library writers are encouraged to make a base recovery for their recoveries under
+  # Mulligan::Recovery. For example:
+  # 
+  #   module MyProduct
+  #     class Recovery < Mulligan::Recovery
+  #     end
+  #   end
+  # 
+  # If there is a superclass of recovery that your recovery can match in behavior,
+  # consider subclassing it as code that chooses recoveries can choose the superclass
+  # and get the best expected behavior.
+  
   class Recovery
 
-    attr_accessor :message
+    class << self
+      attr_accessor :summary, :discussion
+    end
+
+    attr_accessor :summary, :discussion
     
-    def initialize(message = nil)
-      self.message = message
+    def initialize(summary = nil)
+      self.summary = summary
+    end
+    
+    def inspect
+      "#{self.class}: #{summary}"
     end
     
     # Executes the recovery which repairs the Exception at the site of the
@@ -31,14 +52,15 @@ module Mulligan
     
     # Describes the recovery so that a human could make an intelligent choice if
     # presented with a list from which to choose.
-    def message
-      @message || default_message
+    def summary
+      @summary || self.class.summary
     end
     
-    protected
-    
-    def default_message
-      "[no message]"
+    # Describes the recovery so that a human could make an intelligent choice if
+    # presented with a list from which to choose.
+    def discussion
+      @discussion || self.class.discussion
     end
+    
   end
 end
