@@ -56,8 +56,8 @@ module Mulligan
       @summary || self.class.summary
     end
     
-    # Describes the recovery so that a human could make an intelligent choice if
-    # presented with a list from which to choose.
+    # Describes the recovery in detail, including all attributes and what
+    # parameters it might take to the #invoke method
     def discussion
       @discussion || self.class.discussion
     end
