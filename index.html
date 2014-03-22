@@ -41,7 +41,7 @@
       <section>
         <p><a href="https://travis-ci.org/michaeljbishop/mulligan"><img src="https://travis-ci.org/michaeljbishop/mulligan.png?branch=master" alt="Build Status"></a></p>
 
-<p><img src="images/mulligan-logo.png" height="159" width="396" alt="Mulligan"></p>
+<p><img src="https://github.com/michaeljbishop/mulligan/raw/master/images/mulligan-logo.png" alt="Mulligan"></p>
 
 <p>"In golf, a mulligan is a stroke that is replayed from the spot of the previous stroke without penalty, due to an errant shot made on the previous stroke. The result is, as the hole is played and scored, as if the first errant shot had never been made." -- <a href="http://en.wikipedia.org/wiki/Mulligan_(games)#Mulligan_in_golf">Wikipedia</a></p>
 
@@ -55,12 +55,14 @@
 <a name="the-spy-before-radios-were-invented" class="anchor" href="#the-spy-before-radios-were-invented"><span class="octicon octicon-link"></span></a>The Spy Before Radios Were Invented</h4>
 
 <blockquote>
-<p>Once upon a time, there was a spy who had to infiltrate a 17 floor building, each new floor thick with guards. On the top floor was a safe to which he was given a combination. The safe would blow up if the wrong combination was used so he had to be careful. He successfully arrived at the safe after sneaking through all the floors and then he realized on his notes, the combination he was given was "66-99-66".</p>
+<p>Once upon a time, there was a spy who had to infiltrate a 17 floor building, each new floor thick with guards. On the top floor was a safe to which he was given a combination. The safe would blow up if the wrong combination was used so he had to be careful. After sneaking through all the floors, he successfully arrived at the safe and then he realized on his notes the combination read "66-99-66".</p>
 
-<p>To his dismay, he couldn't tell if he was reading it upside-down, and because radios hadn't yet been invented, Intelligence couldn't be contacted and not knowing what to do, he bailed on the mission by jumping out the window and was rescued on the ground by the allies. They told him he was holding the combination upside-down but now he'd have to again go through all 17 floors.</p>
+<p>He couldn't tell if he was reading it upside-down, and because radios hadn't yet been invented, Intelligence couldn't be contacted. Not knowing what to do he bailed on the mission by jumping out the window and was rescued on the ground by the allies. They told him he was indeed holding the combination upside-down but now he'd have to again go through all 17 floors.</p>
 </blockquote>
 
-<p>This the current state of Ruby exception handling. Once an exception is raised, you "abort the mission" and jump out the window where you are rescued. But then you have to start the mission again.</p>
+<p>This the current state of Ruby exception handling. Once an exception is raised, you "abort the mission" and jump out the window where you are rescued.</p>
+
+<p>... but then you have to start the mission again.</p>
 
 <h4>
 <a name="the-spy-after-radios-were-invented" class="anchor" href="#the-spy-after-radios-were-invented"><span class="octicon octicon-link"></span></a>The Spy After Radios Were Invented</h4>
@@ -68,39 +70,39 @@
 <p>Here's the story again, but let's pretend radios now exist:</p>
 
 <blockquote>
-<p>Once upon a time, there was a spy ... yada yada yada... It was then that he realized the combination he was given was 66-99-66.</p>
+<p>Once upon a time, there was a spy ... It was then that he realized the combination he was given was 66-99-66.</p>
 
 <p><strong><em>Because this mission now includes radios</em></strong>, he was able to call intelligence, tell them what was happening and they told him he was holding the note upside-down. He then continued the mission by turning the note right-side-up and opening the safe.</p>
 </blockquote>
 
-<p>The Mulligan gem adds to your exception handling, the radio from the second story. The Ruby <code>rescue</code> clause is like 'Intelligence' who receives the call (as an Exception instance). But attached to that Exception instance are 'recovery objects' which contain data about how to solve the problem. By invoking a recovery object, the code continues to exit without the mission aborting.</p>
+<p>The Mulligan gem adds <em>the radio</em> to your exception handling. The Ruby <code>rescue</code> clause is like 'Intelligence' who receives the call (as an Exception instance), but now attached to that Exception instance are 'recovery objects' which contain data about how to solve the problem. By invoking a recovery object, the code continues to exit without the mission aborting.</p>
 
 <h3>
 <a name="code-example" class="anchor" href="#code-example"><span class="octicon octicon-link"></span></a>Code Example</h3>
 
-<p>Here's a very simple contrived example:</p>
+<p>Here's a very simple contrived example, simply to show flow control:</p>
 
-<div class="highlight highlight-ruby"><pre> <span class="mi">1</span> <span class="nb">require</span> <span class="s1">'mulligan'</span>
- <span class="mi">2</span> 
- <span class="mi">3</span> <span class="k">def</span> <span class="nf">method_that_raises</span>
- <span class="mi">4</span>   <span class="nb">puts</span> <span class="s2">"RAISING"</span>
- <span class="mi">5</span>   <span class="k">case</span> <span class="n">recovery</span>
- <span class="mi">6</span>   <span class="k">when</span> <span class="no">IgnoringRecovery</span>
- <span class="mi">7</span>     <span class="nb">puts</span> <span class="s2">"IGNORING"</span>
- <span class="mi">8</span>   <span class="k">else</span>
- <span class="mi">9</span>     <span class="k">raise</span> <span class="s2">"You can ignore this"</span>
-<span class="mi">10</span>   <span class="k">end</span>
-<span class="mi">11</span>   <span class="nb">puts</span> <span class="s2">"AFTER RAISE"</span>
-<span class="mi">12</span> <span class="k">end</span>
-<span class="mi">13</span>
-<span class="mi">14</span> <span class="k">def</span> <span class="nf">calling_method</span>
-<span class="mi">15</span>   <span class="n">method_that_raises</span>
-<span class="mi">16</span>   <span class="s2">"SUCCESS"</span>
-<span class="mi">17</span> <span class="k">rescue</span> <span class="no">Exception</span> <span class="o">=&gt;</span> <span class="n">e</span>
-<span class="mi">18</span>   <span class="nb">puts</span> <span class="s2">"RESCUED"</span>
-<span class="mi">19</span>   <span class="n">recover</span> <span class="no">IgnoringRecovery</span>
-<span class="mi">10</span>   <span class="nb">puts</span> <span class="s2">"HANDLED"</span>
-<span class="mi">21</span> <span class="k">end</span>
+<div class="highlight highlight-ruby"><pre><span class="nb">require</span> <span class="s1">'mulligan'</span>
+
+<span class="k">def</span> <span class="nf">calling_method</span>
+  <span class="n">method_that_raises</span>
+  <span class="s2">"SUCCESS"</span>
+<span class="k">rescue</span> <span class="no">Exception</span>
+  <span class="nb">puts</span> <span class="s2">"RESCUED"</span>
+  <span class="n">recover</span> <span class="no">IgnoringRecovery</span>
+  <span class="nb">puts</span> <span class="s2">"HANDLED"</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">method_that_raises</span>
+  <span class="nb">puts</span> <span class="s2">"RAISING"</span>
+  <span class="k">case</span> <span class="n">recovery</span>
+  <span class="k">when</span> <span class="no">IgnoringRecovery</span>
+    <span class="nb">puts</span> <span class="s2">"IGNORING"</span>
+  <span class="k">else</span>
+    <span class="k">raise</span> <span class="s2">"You can ignore this"</span>
+  <span class="k">end</span>
+  <span class="nb">puts</span> <span class="s2">"AFTER RAISE"</span>
+<span class="k">end</span>
 </pre></div>
 
 <p>Running this at the REPL shows:</p>
@@ -113,23 +115,13 @@ AFTER RAISE
  =&gt; "SUCCESS" 
 </code></pre>
 
-<h3>
-<a name="how-come-we-didnt-see-handled-in-that-output" class="anchor" href="#how-come-we-didnt-see-handled-in-that-output"><span class="octicon octicon-link"></span></a>How come we didn't see "HANDLED" in that output?</h3>
+<p>Notice that we did't see "HANDLED" in the output</p>
 
 <p>Here's what happened in detail:</p>
 
-<ol>
-<li>
-<code>#method_that_raises</code> is called from <code>#calling_method</code> (line 15)</li>
-<li>
-<code>#method_that_raises</code> raises an exception <em>but</em> before it is raised, a "recovery" can be added to the exception (line 6). That 'when' statement actually creates a an instance of <code>IgnoringRecovery</code>.</li>
-<li>The exception is then raised (line 9) and rescued (line 17)</li>
-<li>The "recovery" on the exception is called (line 19) which takes program execution back to line 7.</li>
-<li>Now, we are inside code that has succeeded the test in then <code>when</code> of line 6. Now it hits the <code>else</code> clause and skips the <code>#raise</code>
-</li>
-<li>The method exits (line 12) and we return to line 16 as if we never saw the exception.</li>
-<li>We exit the method because there's no exception to rescue (line 21). The last value in the function was "SUCCESS" so that is returned.</li>
-</ol><h3>
+<p><img src="https://github.com/michaeljbishop/mulligan/raw/master/images/explanation_diagram.png"></p>
+
+<h3>
 <a name="use-cases" class="anchor" href="#use-cases"><span class="octicon octicon-link"></span></a>Use Cases</h3>
 
 <p>The truth is, often when we throw an exception in code, we probably could actually continue if we just knew what to do. Specifying recoveries allows you to suggest some options to the rescuing code.</p>
@@ -203,7 +195,7 @@ AFTER RAISE
 <a name="kernelrecovery" class="anchor" href="#kernelrecovery"><span class="octicon octicon-link"></span></a>Kernel#recovery</h3>
 
 <h4>
-<a name="to-start-a-case-statement" class="anchor" href="#to-start-a-case-statement"><span class="octicon octicon-link"></span></a>To Start A Case Statement</h4>
+<a name="to-start-a-case-statement" class="anchor" href="#to-start-a-case-statement"><span class="octicon octicon-link"></span></a>To Start A 'case' Statement</h4>
 
 <p><code>recovery</code> is used at the beginning of a <code>case</code> structure to indicate that each <code>when</code> clause is defining a <code>Recovery</code> instance to be attached to the next raised <code>Exception</code> instance.</p>
 
@@ -221,7 +213,7 @@ AFTER RAISE
 <span class="k">end</span>
 </pre></div>
 
-<p>The structure for this has to be quite strict. You <em>have</em> to put the raise inside the <code>else</code> and not before. (For more explanation, see the Appendix)</p>
+<p>The structure for this has to be quite strict. You <em>have</em> to put the <code>raise</code> inside the <code>else</code>. (For more explanation, see the <a href="#appendix">Appendix</a>)</p>
 
 <h4>
 <a name="to-retrieve-a-recovery" class="anchor" href="#to-retrieve-a-recovery"><span class="octicon octicon-link"></span></a>To Retrieve a Recovery</h4>
@@ -229,7 +221,9 @@ AFTER RAISE
 <p>You can also call <code>recovery(&lt;recovery_class&gt;)</code> when inside a rescue statement to see if there is a recovery attached to the exception that fits that class.</p>
 
 <div class="highlight highlight-ruby"><pre><span class="k">rescue</span> <span class="no">Exception</span> <span class="o">=&gt;</span> <span class="n">e</span>
-  <span class="n">recover</span><span class="p">(</span><span class="no">IgnoringRecovery</span><span class="p">)</span> <span class="k">unless</span> <span class="n">recovery</span><span class="p">(</span><span class="no">IgnoringRecovery</span><span class="p">)</span><span class="o">.</span><span class="n">nil?</span>
+  <span class="k">if</span> <span class="o">!</span><span class="n">recovery</span><span class="p">(</span><span class="no">IgnoringRecovery</span><span class="p">)</span><span class="o">.</span><span class="n">nil?</span>
+    <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+  <span class="k">end</span>
 </pre></div>
 
 <h3>
@@ -238,10 +232,28 @@ AFTER RAISE
 <p>Inside a <code>rescue</code> clause, this invokes the recovery object. There is no return value from this. Code execution now proceeds back down into the stack to to the location in the case statement that matches the recovery class.</p>
 
 <div class="highlight highlight-ruby"><pre><span class="k">rescue</span> <span class="no">Exception</span> <span class="o">=&gt;</span> <span class="n">e</span>
-  <span class="n">recover</span><span class="p">(</span><span class="no">IgnoringRecovery</span><span class="p">)</span> <span class="k">unless</span> <span class="n">recovery</span><span class="p">(</span><span class="no">IgnoringRecovery</span><span class="p">)</span><span class="o">.</span><span class="n">nil?</span>
+  <span class="n">recover</span><span class="p">(</span><span class="no">IgnoringRecovery</span><span class="p">)</span>
 </pre></div>
 
-<p>Also note that you can pass arguments which can be retrieved by the code implementing the <code>Recovery</code>.</p>
+<h4>
+<a name="you-can-pass-arguments-when-calling-the-recovery" class="anchor" href="#you-can-pass-arguments-when-calling-the-recovery"><span class="octicon octicon-link"></span></a>You can pass arguments when calling the recovery.</h4>
+
+<p>Here is an example of passing arguments:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="k">rescue</span> <span class="no">Exception</span> <span class="o">=&gt;</span> <span class="n">e</span>
+  <span class="n">recover</span><span class="p">(</span><span class="no">IgnoringRecovery</span><span class="p">,</span> <span class="s2">"I'm saving you"</span><span class="p">)</span>
+</pre></div>
+
+<p>Here is an example of retrieving them:</p>
+
+<div class="highlight highlight-ruby"><pre><span class="k">begin</span>
+<span class="k">case</span> <span class="n">r</span> <span class="o">=</span> <span class="n">recovery</span>
+<span class="k">when</span> <span class="no">IgnoringRecovery</span>
+  <span class="nb">puts</span> <span class="n">r</span><span class="o">.</span><span class="n">argv</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span>        <span class="c1"># will output "I'm saving you"</span>
+<span class="k">else</span>
+  <span class="k">raise</span>
+<span class="k">end</span>
+</pre></div>
 
 <h3>
 <a name="mulliganrecovery" class="anchor" href="#mulliganrecovery"><span class="octicon octicon-link"></span></a>Mulligan::Recovery</h3>
@@ -249,31 +261,58 @@ AFTER RAISE
 <p><code>Mulligan::Recovery</code> is the base class of all recoveries. Use this in the same way you use the <code>Exception</code> hierarchy, but for recoveries. You can define your own subclasses with different properties that can be read by the <code>rescue</code> clauses.</p>
 
 <h4>
-<a name="message-attribute" class="anchor" href="#message-attribute"><span class="octicon octicon-link"></span></a>'message' attribute</h4>
+<a name="metadata" class="anchor" href="#metadata"><span class="octicon octicon-link"></span></a>Metadata</h4>
 
-<p>This is a human-readable description of what the <code>Recovery</code> does. It can be set at the time of raising, or if it's not set, will return <code>#default_message</code></p>
+<p>One thing to note. There is useful metadata associated with a recovery. This is because if you are running your code inside Pry using pry-rescue and an exception is raised uncaught, Pry will open and you can choose a recovery from the list attached to the exception. Your program will then continue as if the exception were never thrown.</p>
+
+<p>Here is the metadata:</p>
 
 <h4>
-<a name="default_message" class="anchor" href="#default_message"><span class="octicon octicon-link"></span></a>#default_message</h4>
+<a name="summary-attribute" class="anchor" href="#summary-attribute"><span class="octicon octicon-link"></span></a>'summary' attribute</h4>
 
-<p>It's very important that you specify the <code>#default_message</code> method in your subclass. If your exception bubbles to the top-level within Pry, you can inspect the attached <code>Recovery</code> instances and execute them yourself. Without that <code>#default_message</code> method, you'll have no idea what a given Recovery will do.</p>
+<p>This is a human-readable description one-line descriptions of what the <code>Recovery</code> does. By default it returns the class attribute, but you can override it in the instance.</p>
+
+<h4>
+<a name="discussion-attribute" class="anchor" href="#discussion-attribute"><span class="octicon octicon-link"></span></a>'discussion' attribute</h4>
+
+<p>This is a detailed discussion of how to use the recovery. Think of it as if you were writing help for a command-line tool and wanted to describe the options and arguments. By default it returns the class attribute, but you can override it in the instance.</p>
+
+<p>If you call <code>Exception#recoveries.inspect</code> inside Pry, you will get a string that looks more or less like this:</p>
+
+<pre><code>Mulligan::RetryingRecovery
+--------------------------
+Performs again the last task which caused the failure.
+Attributes:
+  'count' - The number of times this recovery has been
+            invoked. In this way, you can keep track of
+            how many times the code has been retried and
+            perhaps limit the total number of retries.
+
+Mulligan::IgnoringRecovery
+--------------------------
+Ignores the exception and continues execution.
+If this recovery is attached to an Exception, you may
+safely continue.
+</code></pre>
 
 <h2>
-<a name="supported-rubies" class="anchor" href="#supported-rubies"><span class="octicon octicon-link"></span></a>Supported Rubies</h2>
+<a name="ruby-compatibility" class="anchor" href="#ruby-compatibility"><span class="octicon octicon-link"></span></a>Ruby Compatibility</h2>
 
 <p><a href="https://travis-ci.org/michaeljbishop/mulligan"><img src="https://travis-ci.org/michaeljbishop/mulligan.png?branch=master" alt="Build Status"></a>
 Mulligan fully supports MRI versions 1.9.3 -&gt; 2.1.1</p>
 
-<p>Mulligan will gracefully degrade to standard exception handling on other platforms. Though the API will be there, no recoveries will be attached to Exceptions.</p>
+<p>On all other rubies, Mulligan will gracefully degrade to standard exception handling. Though the API will be there, no recoveries will be attached to Exceptions.</p>
 
-<ul>
-<li>If <code>Kernel#recover</code> is called in a Ruby that doesn't fully support Mulligan, it will be ignored and code execution will continue. This allows you to first try a recovery and after that, write the code that you would do before you had Mulligan.</li>
-</ul><div class="highlight highlight-ruby"><pre><span class="k">rescue</span> <span class="no">TimeoutException</span> <span class="o">=&gt;</span> <span class="n">e</span>
-  <span class="c1"># retry the operation</span>
-  <span class="n">recover</span><span class="p">(</span><span class="no">RetryingRecovery</span><span class="p">)</span>
-  <span class="c1"># if we get here, it's because there is no RetryingRecovery, or we don't have Mulligan</span>
+<p>If  you call <code>Kernel#recover</code> in a Ruby that doesn't fully support Mulligan, it will be ignored and code execution will continue. This allows you to first try a recovery before writing the code that you would do before you had Mulligan.</p>
+
+<div class="highlight highlight-ruby"><pre><span class="k">rescue</span> <span class="no">TimeoutException</span> <span class="o">=&gt;</span> <span class="n">e</span>
+  <span class="n">recover</span><span class="p">(</span><span class="no">RetryingRecovery</span><span class="p">)</span> <span class="c1"># will pass through</span>
+
+  <span class="c1"># We don't have Mulligan. re-raise the exception</span>
   <span class="k">raise</span> <span class="n">e</span>
 </pre></div>
+
+<p>Because of this, there is <strong><em>no downside</em></strong> to adding recoveries to your library. By doing so, you are simply making your library more useful to those who use it.</p>
 
 <h2>
 <a name="faq" class="anchor" href="#faq"><span class="octicon octicon-link"></span></a>FAQ</h2>
@@ -313,7 +352,7 @@ Mulligan fully supports MRI versions 1.9.3 -&gt; 2.1.1</p>
 <ul>
 <li><a href="http://opendylan.org/books/drm/Conditions_Background">Dylan Reference Manual - Conditions - Background</a></li>
 </ul><h2>
-<a name="appendix" class="anchor" href="#appendix"><span class="octicon octicon-link"></span></a>Appendix</h2>
+<a name="appendix" class="anchor" href="#appendix"><span class="octicon octicon-link"></span></a><a name="appendix"></a>Appendix</h2>
 
 <p>I had to pull off some tricks to achieve the <code>case</code> structure in Mulligan. If I had more control over the Ruby Language, my preferred syntax for specifying recoveries would be:</p>
 
