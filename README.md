@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/michaeljbishop/mulligan.png?branch=master)](https://travis-ci.org/michaeljbishop/mulligan)
 
-<img src="images/mulligan-logo.png" height="159" width="396" alt="Mulligan">
+<img src="images/mulligan-logo.png" alt="Mulligan">
 
 "In golf, a mulligan is a stroke that is replayed from the spot of the previous stroke without penalty, due to an errant shot made on the previous stroke. The result is, as the hole is played and scored, as if the first errant shot had never been made." -- [Wikipedia](http://en.wikipedia.org/wiki/Mulligan_(games)#Mulligan_in_golf)
 
@@ -10,47 +10,49 @@
 
 #### The Spy Before Radios Were Invented
 
-> Once upon a time, there was a spy who had to infiltrate a 17 floor building, each new floor thick with guards. On the top floor was a safe to which he was given a combination. The safe would blow up if the wrong combination was used so he had to be careful. He successfully arrived at the safe after sneaking through all the floors and then he realized on his notes, the combination he was given was "66-99-66".
+> Once upon a time, there was a spy who had to infiltrate a 17 floor building, each new floor thick with guards. On the top floor was a safe to which he was given a combination. The safe would blow up if the wrong combination was used so he had to be careful. After sneaking through all the floors, he successfully arrived at the safe and then he realized on his notes the combination read "66-99-66".
 >
-> To his dismay, he couldn't tell if he was reading it upside-down, and because radios hadn't yet been invented, Intelligence couldn't be contacted and not knowing what to do, he bailed on the mission by jumping out the window and was rescued on the ground by the allies. They told him he was holding the combination upside-down but now he'd have to again go through all 17 floors.
+> He couldn't tell if he was reading it upside-down, and because radios hadn't yet been invented, Intelligence couldn't be contacted. Not knowing what to do he bailed on the mission by jumping out the window and was rescued on the ground by the allies. They told him he was indeed holding the combination upside-down but now he'd have to again go through all 17 floors.
 
-This the current state of Ruby exception handling. Once an exception is raised, you "abort the mission" and jump out the window where you are rescued. But then you have to start the mission again.
+This the current state of Ruby exception handling. Once an exception is raised, you "abort the mission" and jump out the window where you are rescued.
+
+... but then you have to start the mission again.
 
 #### The Spy After Radios Were Invented
 
 Here's the story again, but let's pretend radios now exist:
 
-> Once upon a time, there was a spy ... yada yada yada... It was then that he realized the combination he was given was 66-99-66.
+> Once upon a time, there was a spy ... It was then that he realized the combination he was given was 66-99-66.
 >
 > ***Because this mission now includes radios***, he was able to call intelligence, tell them what was happening and they told him he was holding the note upside-down. He then continued the mission by turning the note right-side-up and opening the safe.
 
-The Mulligan gem adds to your exception handling, the radio from the second story. The Ruby `rescue` clause is like 'Intelligence' who receives the call (as an Exception instance). But attached to that Exception instance are 'recovery objects' which contain data about how to solve the problem. By invoking a recovery object, the code continues to exit without the mission aborting.
+The Mulligan gem adds *the radio* to your exception handling. The Ruby `rescue` clause is like 'Intelligence' who receives the call (as an Exception instance), but now attached to that Exception instance are 'recovery objects' which contain data about how to solve the problem. By invoking a recovery object, the code continues to exit without the mission aborting.
 
 ### Code Example
 
-Here's a very simple contrived example:
+Here's a very simple contrived example, simply to show flow control:
 ```ruby
- 1 require 'mulligan'
- 2 
- 3 def method_that_raises
- 4   puts "RAISING"
- 5   case recovery
- 6   when IgnoringRecovery
- 7     puts "IGNORING"
- 8   else
- 9     raise "You can ignore this"
-10   end
-11   puts "AFTER RAISE"
-12 end
-13
-14 def calling_method
-15   method_that_raises
-16   "SUCCESS"
-17 rescue Exception => e
-18   puts "RESCUED"
-19   recover IgnoringRecovery
-10   puts "HANDLED"
-21 end
+require 'mulligan'
+
+def calling_method
+  method_that_raises
+  "SUCCESS"
+rescue Exception
+  puts "RESCUED"
+  recover IgnoringRecovery
+  puts "HANDLED"
+end
+
+def method_that_raises
+  puts "RAISING"
+  case recovery
+  when IgnoringRecovery
+    puts "IGNORING"
+  else
+    raise "You can ignore this"
+  end
+  puts "AFTER RAISE"
+end
 ```
 
 Running this at the REPL shows:
@@ -64,17 +66,12 @@ AFTER RAISE
  => "SUCCESS" 
 ```
 
-### How come we didn't see "HANDLED" in that output?
+Notice that we did't see "HANDLED" in the output
 
 Here's what happened in detail:
 
-1. `#method_that_raises` is called from `#calling_method` (line 15)
-2. `#method_that_raises` raises an exception *but* before it is raised, a "recovery" can be added to the exception (line 6). That 'when' statement actually creates a an instance of `IgnoringRecovery`.
-3. The exception is then raised (line 9) and rescued (line 17)
-4. The "recovery" on the exception is called (line 19) which takes program execution back to line 7.
-5. Now, we are inside code that has succeeded the test in then `when` of line 6. Now it hits the `else` clause and skips the `#raise`
-6. The method exits (line 12) and we return to line 16 as if we never saw the exception.
-7. We exit the method because there's no exception to rescue (line 21). The last value in the function was "SUCCESS" so that is returned.
+<img src="images/explanation_diagram.png">
+
 
 ### Use Cases
 
@@ -140,7 +137,7 @@ You've always known he (or she) knew Lisp and now you have something to ask him 
 ## Basic API
 ### Kernel#recovery
 
-#### To Start A Case Statement
+#### To Start A 'case' Statement
 
 `recovery` is used at the beginning of a `case` structure to indicate that each `when` clause is defining a `Recovery` instance to be attached to the next raised `Exception` instance.
 
@@ -159,7 +156,7 @@ else
 end
 ```
 
-The structure for this has to be quite strict. You *have* to put the raise inside the `else` and not before. (For more explanation, see the Appendix)
+The structure for this has to be quite strict. You *have* to put the `raise` inside the `else`. (For more explanation, see the [Appendix](#appendix))
 
 #### To Retrieve a Recovery
 
@@ -167,7 +164,9 @@ You can also call `recovery(<recovery_class>)` when inside a rescue statement to
 
 ```ruby
 rescue Exception => e
-  recover(IgnoringRecovery) unless recovery(IgnoringRecovery).nil?
+  if !recovery(IgnoringRecovery).nil?
+    ...
+  end
 ```
 
 ### Kernel#recover
@@ -176,37 +175,81 @@ Inside a `rescue` clause, this invokes the recovery object. There is no return v
 
 ```ruby
 rescue Exception => e
-  recover(IgnoringRecovery) unless recovery(IgnoringRecovery).nil?
+  recover(IgnoringRecovery)
 ```
 
-Also note that you can pass arguments which can be retrieved by the code implementing the `Recovery`.
+#### You can pass arguments when calling the recovery.
+
+Here is an example of passing arguments:
+
+```ruby
+rescue Exception => e
+  recover(IgnoringRecovery, "I'm saving you")
+```
+
+Here is an example of retrieving them:
+
+```ruby
+begin
+case r = recovery
+when IgnoringRecovery
+  puts r.argv[0]        # will output "I'm saving you"
+else
+  raise
+end
+```
 
 ### Mulligan::Recovery
 
 `Mulligan::Recovery` is the base class of all recoveries. Use this in the same way you use the `Exception` hierarchy, but for recoveries. You can define your own subclasses with different properties that can be read by the `rescue` clauses.
 
-#### 'message' attribute
-This is a human-readable description of what the `Recovery` does. It can be set at the time of raising, or if it's not set, will return `#default_message`
+One thing to note. There is useful metadata associated with a Recovery. This is because if you are running your code inside Pry using pry-rescue, and an exception is raised uncaught, Pry will open and you can choose a recovery from list attached to the exception. Your program will then continue as if the exception were never thrown.
 
-#### #default_message
-It's very important that you specify the `#default_message` method in your subclass. If your exception bubbles to the top-level within Pry, you can inspect the attached `Recovery` instances and execute them yourself. Without that `#default_message` method, you'll have no idea what a given Recovery will do.
+Here is the metadata:
 
-## Supported Rubies
+#### 'summary' attribute
+This is a human-readable description of what the `Recovery` does. It can be set at the time of raising, or if it's not set, will return `self.class.summary`
+
+#### 'discussion' attribute
+This is a detailed discussion of how to use the recovery. Think of it as if you were writing help for a command-line tool and wanted to describe the options and arguments.
+
+If you call `Exception#recoveries.inspect`, you will get a string that looks more or less like this:
+
+```
+Mulligan::RetryingRecovery
+--------------------------
+Performs again the last task which caused the failure.
+Attributes:
+  'count' - The number of times this recovery has been
+            invoked. In this way, you can keep track of
+            how many times the code has been retried and
+            perhaps limit the total number of retries.
+
+Mulligan::IgnoringRecovery
+--------------------------
+Ignores the exception and continues execution.
+If this recovery is attached to an Exception, you may
+safely continue.
+```
+
+## Ruby Compatibility
 
 [![Build Status](https://travis-ci.org/michaeljbishop/mulligan.png?branch=master)](https://travis-ci.org/michaeljbishop/mulligan)
 Mulligan fully supports MRI versions 1.9.3 -> 2.1.1
 
-Mulligan will gracefully degrade to standard exception handling on other platforms. Though the API will be there, no recoveries will be attached to Exceptions.
+On all other rubies, Mulligan will gracefully degrade to standard exception handling. Though the API will be there, no recoveries will be attached to Exceptions.
 
-- If `Kernel#recover` is called in a Ruby that doesn't fully support Mulligan, it will be ignored and code execution will continue. This allows you to first try a recovery and after that, write the code that you would do before you had Mulligan.
+If  you call `Kernel#recover` in a Ruby that doesn't fully support Mulligan, it will be ignored and code execution will continue. This allows you to first try a recovery before writing the code that you would do before you had Mulligan.
 
 ```ruby
 rescue TimeoutException => e
-  # retry the operation
-  recover(RetryingRecovery)
-  # if we get here, it's because there is no RetryingRecovery, or we don't have Mulligan
+  recover(RetryingRecovery) # will pass through
+
+  # We don't have Mulligan. re-raise the exception
   raise e
 ```
+
+Because of this, there is ***no downside*** to adding recoveries to your library. By doing so, you are simply making your library more useful to those who use it.
 
 ## FAQ
 
@@ -232,7 +275,7 @@ Thanks to [Ryan Angilly](https://twitter.com/angilly) of [Ramen](https://ramen.i
 ## Further Reading
 - [Dylan Reference Manual - Conditions - Background](http://opendylan.org/books/drm/Conditions_Background)
 
-## Appendix
+## <a name="appendix"></a>Appendix
 
 I had to pull off some tricks to achieve the `case` structure in Mulligan. If I had more control over the Ruby Language, my preferred syntax for specifying recoveries would be:
 
