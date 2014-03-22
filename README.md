@@ -203,17 +203,19 @@ end
 
 `Mulligan::Recovery` is the base class of all recoveries. Use this in the same way you use the `Exception` hierarchy, but for recoveries. You can define your own subclasses with different properties that can be read by the `rescue` clauses.
 
-One thing to note. There is useful metadata associated with a Recovery. This is because if you are running your code inside Pry using pry-rescue, and an exception is raised uncaught, Pry will open and you can choose a recovery from list attached to the exception. Your program will then continue as if the exception were never thrown.
+#### Metadata
+
+One thing to note. There is useful metadata associated with a recovery. This is because if you are running your code inside Pry using pry-rescue and an exception is raised uncaught, Pry will open and you can choose a recovery from the list attached to the exception. Your program will then continue as if the exception were never thrown.
 
 Here is the metadata:
 
 #### 'summary' attribute
-This is a human-readable description of what the `Recovery` does. It can be set at the time of raising, or if it's not set, will return `self.class.summary`
+This is a human-readable description one-line descriptions of what the `Recovery` does. By default it returns the class attribute, but you can override it in the instance.
 
 #### 'discussion' attribute
-This is a detailed discussion of how to use the recovery. Think of it as if you were writing help for a command-line tool and wanted to describe the options and arguments.
+This is a detailed discussion of how to use the recovery. Think of it as if you were writing help for a command-line tool and wanted to describe the options and arguments. By default it returns the class attribute, but you can override it in the instance.
 
-If you call `Exception#recoveries.inspect`, you will get a string that looks more or less like this:
+If you call `Exception#recoveries.inspect` inside Pry, you will get a string that looks more or less like this:
 
 ```
 Mulligan::RetryingRecovery
