@@ -1,8 +1,15 @@
-if Mulligan.using_extension?
-  require "mulligan/mulligan"
-end
 require 'mulligan/recovery/retrying'
 require "mulligan/collector"
+
+if Mulligan.supported?
+  if Mulligan.using_extension?
+    require "mulligan/mulligan"
+  else
+    tp = TracePoint.new(:raise) do |tp|
+      Mulligan::Kernel.__process_exception_from_raise__(tp.raised_exception)
+    end.enable
+  end
+end
 
 module Mulligan
 

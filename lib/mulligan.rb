@@ -5,7 +5,7 @@ module Mulligan
   end
 
   def self.using_extension?
-    supported?
+    supported? && RUBY_VERSION < "2.0.0"
   end
 end
 

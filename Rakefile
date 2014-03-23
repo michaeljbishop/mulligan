@@ -8,7 +8,11 @@ def supports_mulligan?
   defined?(RUBY_ENGINE) && RUBY_ENGINE == "ruby" && RUBY_VERSION >= "1.9.3"
 end
 
-if supports_mulligan?
+def uses_c_extension?
+  supports_mulligan? && RUBY_VERSION < "2.0.0"
+end
+
+if uses_c_extension?
   require "rake/extensiontask"
 
   Rake::ExtensionTask.new "mulligan" do |ext|
