@@ -1,3 +1,5 @@
+require 'mulligan/recovery'
+
 module Mulligan
   class RetryingRecovery < Recovery
     self.summary =

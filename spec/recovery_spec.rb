@@ -5,9 +5,12 @@ include Mulligan
 describe Recovery do
 
   describe "#new" do
-    it "overrides the summary" do
-      d = DescriptiveRecovery.new("test")
-      expect(d.summary).to eq "test"
+    it "passes the instance to a block" do
+      block_instance = nil
+      d = DescriptiveRecovery.new do |d2|
+        block_instance = d2
+      end
+      expect(block_instance).to be(d)
     end
   end
 

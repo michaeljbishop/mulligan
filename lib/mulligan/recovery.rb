@@ -34,8 +34,10 @@ module Mulligan
 
     attr_accessor :summary, :discussion
     
-    def initialize(summary = nil)
-      self.summary = summary
+    # Instantiates a Recovery object.
+    # yields the new instance to a block if a block is given
+    def initialize
+      yield self if block_given?
     end
     
     def inspect

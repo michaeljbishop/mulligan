@@ -1,6 +1,8 @@
 if Mulligan.using_extension?
   require "mulligan/mulligan"
 end
+require 'mulligan/retrying_recovery'
+require "mulligan/collector"
 
 module Mulligan
 
@@ -16,8 +18,30 @@ module Mulligan
     # 
     # @param [Class] choice the class of the recovery
     # @return This doesn't actually matter because you can't retrieve it
+    # @raise MissingRecoveryError if Mulligan is supported AND the choice cannot be
+    #                             found. Attached is a RetryingRecovery.
     def recover(choice, *args)
       __execute_recovery__(choice, *args)
+    rescue MissingRecoveryError
+      case r = recovery
+      # use ||= because we only want to make one of these, even if we retry and
+      # go through this code again
+      when rr ||= Mulligan::RetryingRecovery.new do |rr|
+        rr.summary = <<END
+Make another choice for a recovery.
+END
+        rr.discussion = <<END
+This will attempt a new recovery in the context of the old attempt.
+Arguments:
+  <new_choice> - pass a new choice to attempt a recovery
+END
+        end
+        choice = r.argv[0] unless r.argv[0].nil?
+        rr.increment_count
+        retry
+      else
+        raise
+      end
     end
 
     # Serves two functions:
@@ -38,7 +62,7 @@ module Mulligan
       Thread.current[:__last_recovery_collector] = Mulligan::Collector.new
     end
 
-    def __execute_recovery__(choice = nil, *args)
+    def __execute_recovery__(choice, *args)
       raise "No Current Exception" if $!.nil?
       # find the best match for the chosen recovery
       $!.__send__(:__execute_recovery__, choice, *args)

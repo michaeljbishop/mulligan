@@ -121,6 +121,87 @@ describe Mulligan::Kernel do
       expect(result).to eq(Mulligan.supported? ? 5 : 6)
     end
     
+    it "raises a MissingRecoveryError if no recovery can be found" do
+      next unless Mulligan.supported?
+      expect do
+        begin
+          raise
+        rescue => e
+          expect(e.recoveries).to be_empty
+          recover Recovery
+        end
+      end.to raise_error(MissingRecoveryError)
+    end
+
+    context "when raising a MissingRecoveryError" do
+      it "attaches a RetryingRecovery" do
+        result = begin
+          case recovery
+          when IgnoringRecovery
+            5
+          else
+            raise
+          end
+        rescue => e
+          begin
+            recover Recovery
+          rescue MissingRecoveryError
+            expect(recovery RetryingRecovery).to_not be_nil
+          end
+        end
+      end
+
+      it "invoking the RetryingRecovery with a new choice succeeds" do
+        result = begin
+          case recovery
+          when IgnoringRecovery
+            5
+          else
+            raise
+          end
+        rescue => e
+          begin
+            recover RetryingRecovery
+            rescue MissingRecoveryError
+              recover RetryingRecovery, IgnoringRecovery
+          end
+          5
+        end
+        expect(result).to eq(5)
+      end
+
+      it "attaches a RetryingRecovery that keeps count of the retries" do
+        retrying_recovery = nil
+        result = begin
+          case recovery
+          when IgnoringRecovery
+          else
+            raise
+          end
+        rescue => e
+          count = 0
+          begin
+            recover RetryingRecovery
+          rescue MissingRecoveryError
+            retrying_recovery = recovery(RetryingRecovery)
+            if (count < 2)
+              count += 1
+              recover RetryingRecovery
+            else
+              count += 1
+              recover RetryingRecovery, IgnoringRecovery
+            end
+          end
+          5
+        end
+        if Mulligan.supported?
+          expect(retrying_recovery.count).to eq(3)
+        else
+          expect(result).to eq(5)
+        end
+      end
+    end
+    
     it 'passes the arguments to the recovery code through #recovery' do
       begin
         case r = recovery

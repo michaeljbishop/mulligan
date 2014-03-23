@@ -23,8 +23,8 @@ describe Condition do
       it "shows the complete documentation for all the recoveries" do
         begin
           case recovery
-          when r = Recovery.new("summary")
-          when i = IgnoringRecovery.new("summary2")
+          when r = Recovery.new{|r| r.summary = "summary"}
+          when i = IgnoringRecovery.new{|i| i.summary = "summary2"}
           else ; raise ; end
         rescue => e
           r.discussion = "discussion"
