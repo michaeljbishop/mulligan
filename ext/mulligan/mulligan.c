@@ -61,7 +61,7 @@ rb_mulligan_raise(int argc, VALUE *argv, VALUE self)
     if (NIL_P(e)) {
       // get whatever is in $!. I'm sure this is slow
       e = rb_eval_string("$!");
-      // what I'd like to use reallu like to use
+      // what I'd like to use really like to use
 //       e = rb_rubylevel_errinfo(); // internal ruby call, yet necessary
     }
 
