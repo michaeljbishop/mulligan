@@ -1,7 +1,7 @@
 if Mulligan.using_extension?
   require "mulligan/mulligan"
 end
-require 'mulligan/retrying_recovery'
+require 'mulligan/recovery/retrying'
 require "mulligan/collector"
 
 module Mulligan
