@@ -169,37 +169,6 @@ describe Mulligan::Kernel do
         end
         expect(result).to eq(5)
       end
-
-      it "attaches a RetryingRecovery that keeps count of the retries" do
-        retrying_recovery = nil
-        result = begin
-          case recovery
-          when IgnoringRecovery
-          else
-            raise
-          end
-        rescue => e
-          count = 0
-          begin
-            recover RetryingRecovery
-          rescue MissingRecoveryError
-            retrying_recovery = recovery(RetryingRecovery)
-            if (count < 2)
-              count += 1
-              recover RetryingRecovery
-            else
-              count += 1
-              recover RetryingRecovery, IgnoringRecovery
-            end
-          end
-          5
-        end
-        if Mulligan.supported?
-          expect(retrying_recovery.count).to eq(3)
-        else
-          expect(result).to eq(5)
-        end
-      end
     end
     
     it 'passes the arguments to the recovery code through #recovery' do

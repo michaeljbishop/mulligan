@@ -26,7 +26,7 @@ module Mulligan
       case r = recovery
       # use ||= because we only want to make one of these, even if we retry and
       # go through this code again
-      when rr ||= Mulligan::RetryingRecovery.new do |rr|
+      when Mulligan::RetryingRecovery.new do |rr|
         rr.summary = <<END
 Make another choice for a recovery.
 END
@@ -37,7 +37,6 @@ Arguments:
 END
         end
         choice = r.argv[0] unless r.argv[0].nil?
-        rr.increment_count
         retry
       else
         raise
