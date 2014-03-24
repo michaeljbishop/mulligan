@@ -66,73 +66,10 @@ AFTER RAISE
  => "SUCCESS" 
 ```
 
-Notice that we did't see "HANDLED" in the output
-
-Here's what happened in detail:
+Notice that we did't see "HANDLED" in the output? Here's what happened in detail:
 
 <img src="images/explanation_diagram.png">
 
-
-### Use Cases
-
-The truth is, often when we throw an exception in code, we probably could actually continue if we just knew what to do. Specifying recoveries allows you to suggest some options to the rescuing code.
-
-Not only that, you can apply a recovery strategy to large parts of code by handling exceptions at a high level and recovering from them.
-
-From the Dylan Language Manual:
-
-> A condition is an object used to locate and provide information to a handler. A condition represents a situation that needs to be handled. Examples are errors, warnings, and attempts to recover from errors.
-
-("condition" is what we are calling "exception" in Ruby)
-
-#### Fixing network connection errors
-
-```ruby
-def http_post(url, data)
-  ... networking code...
-  raise CredentialsExpiredException if response == 401
-  raise ConnectionFailedException if response == 404
-end
-
-def post_resource(object)
-  ... assemble url and data...
-  http_post(url, data)
-  rescue Exception => e
-    case recovery
-    when RetryingRecovery
-      retry
-    else
-      raise e
-    end
-end
-
-def save_resources
-  post_resource(user)
-  post_resource(post)
-  post_resource(comment)
-
-  rescue CredentialsExpiredException => e
-    ... fix credentials...
-    recover RetryingRecovery
-  rescue ConnectionFailedException => e
-    ... switch from wifi to cellular...
-    recover RetryingRecovery
-end
-```
-
-#### Screen Scraping (in Dylan)
-
-[I'm glad I used Dylan (comp.lang.dylan)](https://groups.google.com/d/msg/comp.lang.dylan/gszO7d7BAok/zqVbQlNDKzAJ)
-
-This is going to be inherently messy and for a long-running program like this, potentially painful to restart if the data is found to be incorrect. Much better to just put in some recoveries and choose from them if errors are found.
-
-#### Handling errors in parsers
-
-You might write a parser to read XML or a log file format and it might encounter malformed entries. You can make that low-level parser code much more reusable if you specify a few recoveries in the raised exceptions. Higher level code will have many more choices to handle errors.
-
-#### Ask your friendly Lisp coder. They've been solving these problems for years.
-
-You've always known he (or she) knew Lisp and now you have something to ask him about.
 
 ## Basic API
 ### Kernel#recovery
@@ -239,19 +176,87 @@ safely continue.
 [![Build Status](https://travis-ci.org/michaeljbishop/mulligan.png?branch=master)](https://travis-ci.org/michaeljbishop/mulligan)
 Mulligan fully supports MRI versions 1.9.3 -> 2.1.1
 
-On all other rubies, Mulligan will gracefully degrade to standard exception handling. Though the API will be there, no recoveries will be attached to Exceptions.
+On all other "compatible" rubies, Mulligan will gracefully degrade to standard exception handling. Though the API will be there, no recoveries will be attached to exceptions. Any calls to the Mulligan API will "pass-through".
 
-If  you call `Kernel#recover` in a Ruby that doesn't fully support Mulligan, it will be ignored and code execution will continue. This allows you to first try a recovery before writing the code that you would do before you had Mulligan.
+This diagram shows what happens to code when running on fully supported Ruby vs. a "compatible" Ruby. Faded code is non-operational or unreachable.
+
+<table width=100%>
+<tr>
+<th>Fully Supported</th>
+<th>Compatible</th>
+</tr>
+<tr>
+<td><img src="images/support/full_raise.png"></td>
+<td><img src="images/support/compatible_raise.png"></td>
+</tr>
+<tr>
+<td><img src="images/support/full_rescue.png"></td>
+<td><img src="images/support/compatible_rescue.png"></td>
+</tr>
+</table>
+
+Because of this, adding recoveries to your code is ***all gravy***. By adding recoveries, you are simply making your library more useful on supported rubies and on unsupported rubies, you merely have what you always had.
+
+### Use Cases
+
+The truth is, often when we throw an exception in code, we probably could actually continue if we just knew what to do. Specifying recoveries allows you to suggest some options to the rescuing code.
+
+Not only that, you can apply a recovery strategy to large parts of code by handling exceptions at a high level and recovering from them.
+
+From the Dylan Language Manual:
+
+> A condition is an object used to locate and provide information to a handler. A condition represents a situation that needs to be handled. Examples are errors, warnings, and attempts to recover from errors.
+
+A "condition" is similar to what we are call "exception" in Ruby except that in Dylan and Lisp, conditions don't always represent errors, but are just a way to send messages higher-level code.
+
+#### Fixing network connection errors
 
 ```ruby
-rescue TimeoutException => e
-  recover(RetryingRecovery) # will pass through
+def http_post(url, data)
+  ... networking code...
+  raise CredentialsExpiredException if response == 401
+  raise ConnectionFailedException if response == 404
+end
 
-  # We don't have Mulligan. re-raise the exception
-  raise e
+def post_resource(object)
+  ... assemble url and data...
+  http_post(url, data)
+  rescue Exception => e
+    case recovery
+    when RetryingRecovery
+      retry
+    else
+      raise e
+    end
+end
+
+def save_resources
+  post_resource(user)
+  post_resource(post)
+  post_resource(comment)
+
+  rescue CredentialsExpiredException => e
+    ... fix credentials...
+    recover RetryingRecovery
+  rescue ConnectionFailedException => e
+    ... switch from wifi to cellular...
+    recover RetryingRecovery
+end
 ```
 
-Because of this, there is ***no downside*** to adding recoveries to your library. By doing so, you are simply making your library more useful to those who use it.
+#### Screen Scraping (in Dylan)
+
+[I'm glad I used Dylan (comp.lang.dylan)](https://groups.google.com/d/msg/comp.lang.dylan/gszO7d7BAok/zqVbQlNDKzAJ)
+
+This is going to be inherently messy and for a long-running program like this, potentially painful to restart if the data is found to be incorrect. Much better to just put in some recoveries and choose from them if errors are found.
+
+#### Handling errors in parsers
+
+You might write a parser to read XML or a log file format and it might encounter malformed entries. You can make that low-level parser code much more reusable if you specify a few recoveries in the raised exceptions. Higher level code will have many more choices to handle errors.
+
+#### Ask your friendly Lisp coder. They've been solving these problems for years.
+
+You've always known he (or she) knew Lisp and now you have something to ask him about.
 
 ## FAQ
 
@@ -276,7 +281,7 @@ Thanks to [Ryan Angilly](https://twitter.com/angilly) of [Ramen](https://ramen.i
 
 ## Further Reading
 - [Dylan Reference Manual - Conditions - Background](http://opendylan.org/books/drm/Conditions_Background)
-
+- [Common Lisp the Launguage, 2nd Edition - Conditions](http://www.cs.cmu.edu/Groups/AI/html/cltl/clm/node312.html)
 ## <a name="appendix"></a>Appendix
 
 I had to pull off some tricks to achieve the `case` structure in Mulligan. If I had more control over the Ruby Language, my preferred syntax for specifying recoveries would be:
