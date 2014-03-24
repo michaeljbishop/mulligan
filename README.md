@@ -282,6 +282,7 @@ Thanks to [Ryan Angilly](https://twitter.com/angilly) of [Ramen](https://ramen.i
 ## Further Reading
 - [Dylan Reference Manual - Conditions - Background](http://opendylan.org/books/drm/Conditions_Background)
 - [Common Lisp the Launguage, 2nd Edition - Conditions](http://www.cs.cmu.edu/Groups/AI/html/cltl/clm/node312.html)
+
 ## <a name="appendix"></a>Appendix
 
 I had to pull off some tricks to achieve the `case` structure in Mulligan. If I had more control over the Ruby Language, my preferred syntax for specifying recoveries would be:
