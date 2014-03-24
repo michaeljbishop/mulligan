@@ -115,78 +115,9 @@ AFTER RAISE
  =&gt; "SUCCESS" 
 </code></pre>
 
-<p>Notice that we did't see "HANDLED" in the output</p>
-
-<p>Here's what happened in detail:</p>
+<p>Notice that we did't see "HANDLED" in the output? Here's what happened in detail:</p>
 
 <p><img src="https://github.com/michaeljbishop/mulligan/raw/master/images/explanation_diagram.png"></p>
-
-<h3>
-<a name="use-cases" class="anchor" href="#use-cases"><span class="octicon octicon-link"></span></a>Use Cases</h3>
-
-<p>The truth is, often when we throw an exception in code, we probably could actually continue if we just knew what to do. Specifying recoveries allows you to suggest some options to the rescuing code.</p>
-
-<p>Not only that, you can apply a recovery strategy to large parts of code by handling exceptions at a high level and recovering from them.</p>
-
-<p>From the Dylan Language Manual:</p>
-
-<blockquote>
-<p>A condition is an object used to locate and provide information to a handler. A condition represents a situation that needs to be handled. Examples are errors, warnings, and attempts to recover from errors.</p>
-</blockquote>
-
-<p>("condition" is what we are calling "exception" in Ruby)</p>
-
-<h4>
-<a name="fixing-network-connection-errors" class="anchor" href="#fixing-network-connection-errors"><span class="octicon octicon-link"></span></a>Fixing network connection errors</h4>
-
-<div class="highlight highlight-ruby"><pre><span class="k">def</span> <span class="nf">http_post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-  <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="n">networking</span> <span class="n">code</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
-  <span class="k">raise</span> <span class="no">CredentialsExpiredException</span> <span class="k">if</span> <span class="n">response</span> <span class="o">==</span> <span class="mi">401</span>
-  <span class="k">raise</span> <span class="no">ConnectionFailedException</span> <span class="k">if</span> <span class="n">response</span> <span class="o">==</span> <span class="mi">404</span>
-<span class="k">end</span>
-
-<span class="k">def</span> <span class="nf">post_resource</span><span class="p">(</span><span class="n">object</span><span class="p">)</span>
-  <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="n">assemble</span> <span class="n">url</span> <span class="ow">and</span> <span class="n">data</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
-  <span class="n">http_post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-  <span class="k">rescue</span> <span class="no">Exception</span> <span class="o">=&gt;</span> <span class="n">e</span>
-    <span class="k">case</span> <span class="n">recovery</span>
-    <span class="k">when</span> <span class="no">RetryingRecovery</span>
-      <span class="k">retry</span>
-    <span class="k">else</span>
-      <span class="k">raise</span> <span class="n">e</span>
-    <span class="k">end</span>
-<span class="k">end</span>
-
-<span class="k">def</span> <span class="nf">save_resources</span>
-  <span class="n">post_resource</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
-  <span class="n">post_resource</span><span class="p">(</span><span class="n">post</span><span class="p">)</span>
-  <span class="n">post_resource</span><span class="p">(</span><span class="n">comment</span><span class="p">)</span>
-
-  <span class="k">rescue</span> <span class="no">CredentialsExpiredException</span> <span class="o">=&gt;</span> <span class="n">e</span>
-    <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="n">fix</span> <span class="n">credentials</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
-    <span class="n">recover</span> <span class="no">RetryingRecovery</span>
-  <span class="k">rescue</span> <span class="no">ConnectionFailedException</span> <span class="o">=&gt;</span> <span class="n">e</span>
-    <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="n">switch</span> <span class="n">from</span> <span class="n">wifi</span> <span class="n">to</span> <span class="n">cellular</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
-    <span class="n">recover</span> <span class="no">RetryingRecovery</span>
-<span class="k">end</span>
-</pre></div>
-
-<h4>
-<a name="screen-scraping-in-dylan" class="anchor" href="#screen-scraping-in-dylan"><span class="octicon octicon-link"></span></a>Screen Scraping (in Dylan)</h4>
-
-<p><a href="https://groups.google.com/d/msg/comp.lang.dylan/gszO7d7BAok/zqVbQlNDKzAJ">I'm glad I used Dylan (comp.lang.dylan)</a></p>
-
-<p>This is going to be inherently messy and for a long-running program like this, potentially painful to restart if the data is found to be incorrect. Much better to just put in some recoveries and choose from them if errors are found.</p>
-
-<h4>
-<a name="handling-errors-in-parsers" class="anchor" href="#handling-errors-in-parsers"><span class="octicon octicon-link"></span></a>Handling errors in parsers</h4>
-
-<p>You might write a parser to read XML or a log file format and it might encounter malformed entries. You can make that low-level parser code much more reusable if you specify a few recoveries in the raised exceptions. Higher level code will have many more choices to handle errors.</p>
-
-<h4>
-<a name="ask-your-friendly-lisp-coder-theyve-been-solving-these-problems-for-years" class="anchor" href="#ask-your-friendly-lisp-coder-theyve-been-solving-these-problems-for-years"><span class="octicon octicon-link"></span></a>Ask your friendly Lisp coder. They've been solving these problems for years.</h4>
-
-<p>You've always known he (or she) knew Lisp and now you have something to ask him about.</p>
 
 <h2>
 <a name="basic-api" class="anchor" href="#basic-api"><span class="octicon octicon-link"></span></a>Basic API</h2>
@@ -301,18 +232,91 @@ safely continue.
 <p><a href="https://travis-ci.org/michaeljbishop/mulligan"><img src="https://travis-ci.org/michaeljbishop/mulligan.png?branch=master" alt="Build Status"></a>
 Mulligan fully supports MRI versions 1.9.3 -&gt; 2.1.1</p>
 
-<p>On all other rubies, Mulligan will gracefully degrade to standard exception handling. Though the API will be there, no recoveries will be attached to Exceptions.</p>
+<p>On all other "compatible" rubies, Mulligan will gracefully degrade to standard exception handling. Though the API will be there, no recoveries will be attached to exceptions. Any calls to the Mulligan API will "pass-through".</p>
 
-<p>If  you call <code>Kernel#recover</code> in a Ruby that doesn't fully support Mulligan, it will be ignored and code execution will continue. This allows you to first try a recovery before writing the code that you would do before you had Mulligan.</p>
+<p>This diagram shows what happens to code when running on fully supported Ruby vs. a "compatible" Ruby. Faded code is non-operational or unreachable.</p>
 
-<div class="highlight highlight-ruby"><pre><span class="k">rescue</span> <span class="no">TimeoutException</span> <span class="o">=&gt;</span> <span class="n">e</span>
-  <span class="n">recover</span><span class="p">(</span><span class="no">RetryingRecovery</span><span class="p">)</span> <span class="c1"># will pass through</span>
+<table width="100%">
+<tr>
+<th>Fully Supported</th>
+<th>Compatible</th>
+</tr>
+<tr>
+<td><img src="https://github.com/michaeljbishop/mulligan/raw/master/images/support/full_raise.png"></td>
+<td><img src="https://github.com/michaeljbishop/mulligan/raw/master/images/support/compatible_raise.png"></td>
+</tr>
+<tr>
+<td><img src="https://github.com/michaeljbishop/mulligan/raw/master/images/support/full_rescue.png"></td>
+<td><img src="https://github.com/michaeljbishop/mulligan/raw/master/images/support/compatible_rescue.png"></td>
+</tr>
+</table><p>Because of this, adding recoveries to your code is <strong><em>all gravy</em></strong>. By adding recoveries, you are simply making your library more useful on supported rubies and on unsupported rubies, you merely have what you always had.</p>
 
-  <span class="c1"># We don't have Mulligan. re-raise the exception</span>
-  <span class="k">raise</span> <span class="n">e</span>
+<h3>
+<a name="use-cases" class="anchor" href="#use-cases"><span class="octicon octicon-link"></span></a>Use Cases</h3>
+
+<p>The truth is, often when we throw an exception in code, we probably could actually continue if we just knew what to do. Specifying recoveries allows you to suggest some options to the rescuing code.</p>
+
+<p>Not only that, you can apply a recovery strategy to large parts of code by handling exceptions at a high level and recovering from them.</p>
+
+<p>From the Dylan Language Manual:</p>
+
+<blockquote>
+<p>A condition is an object used to locate and provide information to a handler. A condition represents a situation that needs to be handled. Examples are errors, warnings, and attempts to recover from errors.</p>
+</blockquote>
+
+<p>A "condition" is similar to what we are call "exception" in Ruby except that in Dylan and Lisp, conditions don't always represent errors, but are just a way to send messages higher-level code.</p>
+
+<h4>
+<a name="fixing-network-connection-errors" class="anchor" href="#fixing-network-connection-errors"><span class="octicon octicon-link"></span></a>Fixing network connection errors</h4>
+
+<div class="highlight highlight-ruby"><pre><span class="k">def</span> <span class="nf">http_post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+  <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="n">networking</span> <span class="n">code</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
+  <span class="k">raise</span> <span class="no">CredentialsExpiredException</span> <span class="k">if</span> <span class="n">response</span> <span class="o">==</span> <span class="mi">401</span>
+  <span class="k">raise</span> <span class="no">ConnectionFailedException</span> <span class="k">if</span> <span class="n">response</span> <span class="o">==</span> <span class="mi">404</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">post_resource</span><span class="p">(</span><span class="n">object</span><span class="p">)</span>
+  <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="n">assemble</span> <span class="n">url</span> <span class="ow">and</span> <span class="n">data</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
+  <span class="n">http_post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+  <span class="k">rescue</span> <span class="no">Exception</span> <span class="o">=&gt;</span> <span class="n">e</span>
+    <span class="k">case</span> <span class="n">recovery</span>
+    <span class="k">when</span> <span class="no">RetryingRecovery</span>
+      <span class="k">retry</span>
+    <span class="k">else</span>
+      <span class="k">raise</span> <span class="n">e</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nf">save_resources</span>
+  <span class="n">post_resource</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+  <span class="n">post_resource</span><span class="p">(</span><span class="n">post</span><span class="p">)</span>
+  <span class="n">post_resource</span><span class="p">(</span><span class="n">comment</span><span class="p">)</span>
+
+  <span class="k">rescue</span> <span class="no">CredentialsExpiredException</span> <span class="o">=&gt;</span> <span class="n">e</span>
+    <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="n">fix</span> <span class="n">credentials</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
+    <span class="n">recover</span> <span class="no">RetryingRecovery</span>
+  <span class="k">rescue</span> <span class="no">ConnectionFailedException</span> <span class="o">=&gt;</span> <span class="n">e</span>
+    <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="n">switch</span> <span class="n">from</span> <span class="n">wifi</span> <span class="n">to</span> <span class="n">cellular</span><span class="o">.</span><span class="n">.</span><span class="o">.</span>
+    <span class="n">recover</span> <span class="no">RetryingRecovery</span>
+<span class="k">end</span>
 </pre></div>
 
-<p>Because of this, there is <strong><em>no downside</em></strong> to adding recoveries to your library. By doing so, you are simply making your library more useful to those who use it.</p>
+<h4>
+<a name="screen-scraping-in-dylan" class="anchor" href="#screen-scraping-in-dylan"><span class="octicon octicon-link"></span></a>Screen Scraping (in Dylan)</h4>
+
+<p><a href="https://groups.google.com/d/msg/comp.lang.dylan/gszO7d7BAok/zqVbQlNDKzAJ">I'm glad I used Dylan (comp.lang.dylan)</a></p>
+
+<p>This is going to be inherently messy and for a long-running program like this, potentially painful to restart if the data is found to be incorrect. Much better to just put in some recoveries and choose from them if errors are found.</p>
+
+<h4>
+<a name="handling-errors-in-parsers" class="anchor" href="#handling-errors-in-parsers"><span class="octicon octicon-link"></span></a>Handling errors in parsers</h4>
+
+<p>You might write a parser to read XML or a log file format and it might encounter malformed entries. You can make that low-level parser code much more reusable if you specify a few recoveries in the raised exceptions. Higher level code will have many more choices to handle errors.</p>
+
+<h4>
+<a name="ask-your-friendly-lisp-coder-theyve-been-solving-these-problems-for-years" class="anchor" href="#ask-your-friendly-lisp-coder-theyve-been-solving-these-problems-for-years"><span class="octicon octicon-link"></span></a>Ask your friendly Lisp coder. They've been solving these problems for years.</h4>
+
+<p>You've always known he (or she) knew Lisp and now you have something to ask him about.</p>
 
 <h2>
 <a name="faq" class="anchor" href="#faq"><span class="octicon octicon-link"></span></a>FAQ</h2>
@@ -351,10 +355,10 @@ Mulligan fully supports MRI versions 1.9.3 -&gt; 2.1.1</p>
 
 <ul>
 <li><a href="http://opendylan.org/books/drm/Conditions_Background">Dylan Reference Manual - Conditions - Background</a></li>
-</ul><h2>
-<a name="appendix" class="anchor" href="#appendix"><span class="octicon octicon-link"></span></a><a name="appendix"></a>Appendix</h2>
-
-<p>I had to pull off some tricks to achieve the <code>case</code> structure in Mulligan. If I had more control over the Ruby Language, my preferred syntax for specifying recoveries would be:</p>
+<li>
+<a href="http://www.cs.cmu.edu/Groups/AI/html/cltl/clm/node312.html">Common Lisp the Launguage, 2nd Edition - Conditions</a>
+## <a name="appendix"></a>Appendix</li>
+</ul><p>I had to pull off some tricks to achieve the <code>case</code> structure in Mulligan. If I had more control over the Ruby Language, my preferred syntax for specifying recoveries would be:</p>
 
 <div class="highlight highlight-ruby"><pre><span class="k">raise</span> <span class="o">[</span><span class="no">Exception</span> <span class="o">[</span><span class="p">,</span> <span class="n">message</span> <span class="o">[</span><span class="p">,</span> <span class="n">backtrace</span><span class="o">]]]</span>
   <span class="c1"># ... code that is always executed during a recovery</span>
