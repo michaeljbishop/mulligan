@@ -42,8 +42,9 @@ describe MissingRecoveryError do
         rescue MissingRecoveryError => e
           recover RetryingRecovery, IgnoringRecovery, 5, 6
       end
+      [7,8]
     end
-    expect(result).to eq [5,6]
+    expect(result).to eq Mulligan.supported? ? [5,6] : [7,8]
   end
 end
 
