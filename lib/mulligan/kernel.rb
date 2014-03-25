@@ -44,6 +44,8 @@ Arguments:
 END
         end
         choice = r.argv[0] unless r.argv[0].nil?
+        rest = r.argv[1..-1]
+        args   = rest unless rest.nil? || rest.empty?
         retry
       else
         raise

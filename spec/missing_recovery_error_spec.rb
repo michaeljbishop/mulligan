@@ -27,5 +27,23 @@ describe MissingRecoveryError do
       end
     end
   end
+
+  it "allows executing with new args" do
+    result = begin
+    case r = recovery
+    when IgnoringRecovery
+      r.argv
+    else
+      raise "test"
+    end
+    rescue RuntimeError => previous
+      begin
+        recover RetryingRecovery
+        rescue MissingRecoveryError => e
+          recover RetryingRecovery, IgnoringRecovery, 5, 6
+      end
+    end
+    expect(result).to eq [5,6]
+  end
 end
 
