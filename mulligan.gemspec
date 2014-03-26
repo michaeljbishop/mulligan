@@ -18,7 +18,7 @@ __END__
   spec.homepage      = "http://michaeljbishop.github.io/mulligan"
   spec.license       = "MIT"
 
-  spec.files         = `git ls-files -z`.split("\x0")
+  spec.files         = `git ls-files -z`.split("\x0").reject{|f| f.start_with? "images/", "art/" }
   spec.extensions    = %w[ext/mulligan/extconf.rb]
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
