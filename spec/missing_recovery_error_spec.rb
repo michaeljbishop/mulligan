@@ -6,7 +6,7 @@ require "mulligan/error/missing_recovery"
 describe MissingRecoveryError do
   it "has the previous choice" do
     begin
-      raise
+      mg_raise
     rescue
       begin
         recover RetryingRecovery
@@ -18,7 +18,7 @@ describe MissingRecoveryError do
 
   it "has the previous error" do
     begin
-      raise "test"
+      mg_raise "test"
     rescue => previous
       begin
         recover RetryingRecovery
@@ -34,7 +34,7 @@ describe MissingRecoveryError do
     when IgnoringRecovery
       r.argv
     else
-      raise "test"
+      mg_raise "test"
     end
     rescue RuntimeError => previous
       begin

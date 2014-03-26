@@ -4,7 +4,7 @@
 //  DECLARATIONS
 // -----------------------------------------------------------
 
-static VALUE rb_mulligan_raise(int argc, VALUE *argv, VALUE self);
+static VALUE rb_mg_raise(int argc, VALUE *argv, VALUE self);
 
 static ID id___process_exception_from_raise__ = 0;
 static VALUE mKernel = 0;
@@ -17,15 +17,8 @@ void Init_mulligan(void)
 {
   VALUE mMulligan = rb_define_module("Mulligan");
   mKernel = rb_define_module_under(mMulligan, "Kernel");
-  rb_define_method(mKernel, "raise", rb_mulligan_raise, -1);
-  rb_define_method(mKernel, "fail", rb_mulligan_raise, -1);
-
-#if RUBY_API_VERSION_MAJOR < 2
-  // completely replaces Ruby's version of raise.
-  // In Ruby 2 we prepend (but don't call super)
-  rb_define_global_function("raise", rb_mulligan_raise, -1);
-  rb_define_global_function("fail", rb_mulligan_raise, -1);
-#endif
+  rb_define_method(mKernel, "mg_raise", rb_mg_raise, -1);
+  rb_define_method(mKernel, "mg_fail", rb_mg_raise, -1);
 
   id___process_exception_from_raise__ = rb_intern("__process_exception_from_raise__");
 }
@@ -51,7 +44,7 @@ end
 
 
 static VALUE
-rb_mulligan_raise(int argc, VALUE *argv, VALUE self)
+rb_mg_raise(int argc, VALUE *argv, VALUE self)
 {
     // -----------------------------------------------------------
     //  Get a reference to the Exception object

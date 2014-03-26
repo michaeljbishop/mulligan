@@ -8,7 +8,7 @@ describe Mulligan::Kernel do
         exception = begin
           case recovery
           when IgnoringRecovery
-          else ; raise ; end
+          else ; mg_raise ; end
         rescue => e ; e
         end
         expect(exception.recoveries.first.is_a? IgnoringRecovery).to eq(Mulligan.supported?)
@@ -18,7 +18,7 @@ describe Mulligan::Kernel do
         exception = begin
           case recovery
           when IgnoringRecovery.new
-          else ; raise ; end
+          else ; mg_raise ; end
         rescue => e ; e
         end
         expect(exception.recoveries.first.is_a? IgnoringRecovery).to eq(Mulligan.supported?)
@@ -29,7 +29,7 @@ describe Mulligan::Kernel do
           case recovery
           when IgnoringRecovery
           when IgnoringRecovery
-          else ; raise ; end
+          else ; mg_raise ; end
         rescue => e ; e
         end
         expect(exception.recoveries.count).to Mulligan.supported? ? be(1) : be(0)
@@ -40,7 +40,7 @@ describe Mulligan::Kernel do
           case recovery
           when IgnoringRecovery.new
           when IgnoringRecovery.new
-          else ; raise ; end
+          else ; mg_raise ; end
         rescue => e ; e
         end
         expect(exception.recoveries.count).to Mulligan.supported? ? be(1) : be(0)
@@ -51,7 +51,7 @@ describe Mulligan::Kernel do
           case recovery
           when IgnoringRecovery.new
           when IgnoringRecovery
-          else ; raise ; end
+          else ; mg_raise ; end
         rescue => e ; e
         end
         expect(exception.recoveries.count).to Mulligan.supported? ? be(1) : be(0)
@@ -66,7 +66,7 @@ describe Mulligan::Kernel do
           case recovery
           when i = IgnoringRecovery.new
           when r = Recovery.new
-          else ; raise ; end
+          else ; mg_raise ; end
         rescue => e
           next e unless Mulligan.supported?
           expect(recovery(Recovery)).to Mulligan.supported? ? be(i) : be_nil
@@ -78,7 +78,7 @@ describe Mulligan::Kernel do
           case recovery
           when r = Recovery.new
           when i = IgnoringRecovery.new
-          else ; raise ; end
+          else ; mg_raise ; end
         rescue => e
           expect(recovery(IgnoringRecovery)).to Mulligan.supported? ? be(i) : be_nil
         end
@@ -88,12 +88,12 @@ describe Mulligan::Kernel do
         begin
           case recovery
           when r = Recovery.new
-          else ; raise ; end
+          else ; mg_raise ; end
         rescue => e
           begin
             case recovery
             when r2 = Recovery.new
-            else ; raise e ; end
+            else ; mg_raise e ; end
           rescue => e2
             expect(recovery(Recovery)).to Mulligan.supported? ? be(r) : be_nil
           end
@@ -113,7 +113,7 @@ describe Mulligan::Kernel do
         case recovery
         when Recovery
           5
-        else ; raise ; end
+        else ; mg_raise ; end
       rescue => e
         recover Recovery
         6
@@ -125,7 +125,7 @@ describe Mulligan::Kernel do
       next unless Mulligan.supported?
       expect do
         begin
-          raise
+          mg_raise
         rescue => e
           expect(e.recoveries).to be_empty
           recover Recovery
@@ -140,7 +140,7 @@ describe Mulligan::Kernel do
           when IgnoringRecovery
             5
           else
-            raise
+            mg_raise
           end
         rescue => e
           begin
@@ -157,7 +157,7 @@ describe Mulligan::Kernel do
           when IgnoringRecovery
             5
           else
-            raise
+            mg_raise
           end
         rescue => e
           begin
@@ -176,7 +176,7 @@ describe Mulligan::Kernel do
         case r = recovery
         when Recovery
           expect(r.argv).to eq([5,6])
-        else ; raise ; end
+        else ; mg_raise ; end
       rescue => e
         recover Recovery, 5, 6
       end
@@ -188,68 +188,66 @@ describe Mulligan::Kernel do
     end
   end
 
-  if Mulligan.using_extension?
-    describe "#raise (C-extension)" do
-      it "reports the proper line" do
-        begin
-          line = __LINE__ ; raise "Test"
-        rescue => e
-          expect(line_from_stack_string(e.backtrace[0])).to eq(line)
-        end
+  describe "#mg_raise " + (Mulligan.using_extension? ? "(C-extension)" : "(as an alias for Kernel#raise)") do
+    it "reports the proper line" do
+      begin
+        line = __LINE__ ; mg_raise "Test"
+      rescue => e
+        expect(line_from_stack_string(e.backtrace[0])).to eq(line)
       end
+    end
 
-      context "when called with no arguments" do
-        it "raises the last active exception" do
+    context "when called with no arguments" do
+      it "raises the last active exception" do
+        begin
+          mg_raise Exception, "test"
+        rescue Exception => e
+          expect($!).to be(e)
           begin
-            raise Exception, "test"
-          rescue Exception => e
-            expect($!).to be(e)
-            begin
-              raise
-            rescue Exception => e2
-              expect(e2).to be(e)
-            end
+            mg_raise
+          rescue Exception => e2
+            expect(e2).to be(e)
           end
         end
-    
-        it "raises a RuntimeError if there is no last active exception"  do
-          expect { raise }.to raise_error(RuntimeError)
-        end
       end
   
-      it "raises a RuntimeError with string message when called with a single string" do
-        message = "test"
-        begin
-          raise message
-        rescue RuntimeError => e
-          expect(e.message).to eq(message)
-        end
+      it "raises a RuntimeError if there is no last active exception"  do
+        expect { mg_raise }.to raise_error(RuntimeError)
+      end
+    end
+
+    it "raises a RuntimeError with string message when called with a single string" do
+      message = "test"
+      begin
+        mg_raise message
+      rescue RuntimeError => e
+        expect(e.message).to eq(message)
+      end
+    end
+
+    it "raises an error when called with two strings" do
+      expect{ mg_raise("hello", "world") }.to raise_error
+    end
+
+    context "when called with a Exception subclass class object" do
+      it "raises an instance of that subclass" do
+        expect{ mg_raise CustomException }.to raise_error(CustomException)
+      end
+    end
+
+    context "when called with an object instance" do
+      let(:object){ CustomObjectReturner.new }
+
+      it "raises the result of calling object.exception" do
+        expect{ mg_raise object }.to raise_error(CustomException)
       end
 
-      it "raises an error when called with two strings" do
-        expect{ raise("hello", "world") }.to raise_error
-      end
-  
-      context "when called with a Exception subclass class object" do
-        it "raises an instance of that subclass" do
-          expect{ raise CustomException }.to raise_error(CustomException)
-        end
-      end
-
-      context "when called with an object instance" do
-        let(:object){ CustomObjectReturner.new }
-
-        it "raises the result of calling object.exception" do
-          expect{ raise object }.to raise_error(CustomException)
-        end
-
-        context "and a string" do
-          it "raises the result of calling object.exception with a custom message" do
-            begin
-              raise object, "test"
-            rescue CustomException => e
-              expect(e.message).to eq("test")
-            end
+      context "and a string" do
+        it "raises the result of calling object.exception with a custom message" do
+          begin
+            mg_raise object, "test"
+          rescue CustomException => e
+            expect(e.message).to eq("test")
           end
         end
       end

@@ -136,6 +136,8 @@ else
 end
 ```
 
+Note that the return value from the `#recovery` call is assigned to a variable which then holds the arguments.
+
 ### Mulligan::Recovery
 
 `Mulligan::Recovery` is the base class of all recoveries. Use this in the same way you use the `Exception` hierarchy, but for recoveries. You can define your own subclasses with different properties that can be read by the `rescue` clauses.
@@ -174,7 +176,7 @@ safely continue.
 ## Ruby Compatibility
 
 [![Build Status](https://travis-ci.org/michaeljbishop/mulligan.png?branch=master)](https://travis-ci.org/michaeljbishop/mulligan)
-Mulligan fully supports MRI versions 1.9.3 -> 2.1.1
+Mulligan fully supports MRI versions 1.9.3 -> current
 
 On all other "compatible" rubies, Mulligan will gracefully degrade to standard exception handling. Though the API will be there, no recoveries will be attached to exceptions. Any calls to the Mulligan API will "pass-through".
 
@@ -197,7 +199,17 @@ This diagram shows what happens to code when running on fully supported Ruby vs.
 
 Because of this, adding recoveries to your code is ***all gravy***. By adding recoveries, you are simply making your library more useful on supported rubies and on unsupported rubies, you merely have what you always had.
 
-### Use Cases
+### Special note for Ruby 1.9
+
+#### #mg_raise
+
+Because there is no way (that I know of) in Ruby 1.9 to be notified of a call to `#raise` which *includes the exception being raised*, mulligan implements an equivalent to `#raise` called `#mg_raise` (and `#mg_fail`). These behave identically to `#raise` but give mulligan a chance to add recoveries before the exception is raised.
+
+You can safely use these calls if you need compatibility with Ruby 1.9. On Ruby 2.x, they are simply aliases for `#raise` and there is no c-extension. On non-MRI rubies, they are also aliases for `#raise` (but no recoveries are added).
+
+Or, if you know nothing else in your app or app's gemset overrides `#raise` with special-behavior, you can safely make `#raise` an alias for `#mg_raise` yourself and then use `#raise` everywhere.
+
+## Use Cases
 
 The truth is, often when we throw an exception in code, we probably could actually continue if we just knew what to do. Specifying recoveries allows you to suggest some options to the rescuing code.
 

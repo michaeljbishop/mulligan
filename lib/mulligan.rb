@@ -9,18 +9,13 @@ module Mulligan
   end
 end
 
-require "mulligan/condition"
+require "mulligan/exception"
 require "mulligan/kernel"
 
 class Exception
-  include Mulligan::Condition
+  include Mulligan::Exception
 end
 
 class Object
-  if RUBY_VERSION < "2.0"
-    # ruby 1.9 replaces raise in the extension
-    include Mulligan::Kernel
-  else
-    prepend Mulligan::Kernel
-  end
+  include Mulligan::Kernel
 end

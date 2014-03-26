@@ -1,15 +1,13 @@
 require 'spec_helper'
 
-include Mulligan
-
-describe Condition do
+describe Mulligan::Exception do
   describe "#recoveries" do
     it 'contains the collected recoveries' do
       begin
         case recovery
         when r = Recovery.new
         when i = IgnoringRecovery.new
-        else ; raise ; end
+        else ; mg_raise ; end
       rescue => e
         if Mulligan.supported?
           expect(e.recoveries).to eq [r,i]
@@ -25,7 +23,7 @@ describe Condition do
           case recovery
           when r = Recovery.new{|r| r.summary = "summary"}
           when i = IgnoringRecovery.new{|i| i.summary = "summary2"}
-          else ; raise ; end
+          else ; mg_raise ; end
         rescue => e
           r.discussion = "discussion"
           i.discussion = "discussion2"

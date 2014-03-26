@@ -1,5 +1,5 @@
 module Mulligan
-  module Condition
+  module Exception
   
     # @return The list of recoveries available with this Exception
     def recoveries
@@ -39,7 +39,7 @@ module Mulligan
 
     def __execute_recovery__(choice = nil, *args)
       r = __chosen_recovery__(choice)
-      raise MissingRecoveryError.new(choice) if r.nil? && Mulligan.supported?
+      mg_raise MissingRecoveryError.new(choice) if r.nil? && Mulligan.supported?
       r.invoke(*args) unless r.nil?
     end
 

@@ -11,7 +11,7 @@ describe Collector do
         times = times + 1
         IgnoringRecovery
       end
-      else ; raise ; end
+      else ; mg_raise ; end
     rescue => e
       recover IgnoringRecovery
     end

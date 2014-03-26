@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
   spec.description   = <<__END__
 Allows you to decouple the code implementing a exception-handling strategy from the code which decides which strategy to use.
 
-In other words, when you handle a Mulligan::Condition in your rescue clause, you can choose from a set of strategies (called "restarts") exposed by the exception to take the stack back to where #raise was called, execute your strategy, and pretend that the exception was never raised.
+In other words, when you handle an exception in your rescue clause, you can choose from a set of strategies (called "recoveries") exposed by the exception to take the stack back to where #raise was called, execute your strategy, and pretend that the exception was never raised.
 __END__
   spec.homepage      = "http://michaeljbishop.github.io/mulligan"
   spec.license       = "MIT"

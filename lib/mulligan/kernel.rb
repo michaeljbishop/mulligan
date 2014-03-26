@@ -13,11 +13,14 @@ end
 
 module Mulligan
 
-  # An exception that is thrown when invoking a non-existent recovery.
-  class ControlException < Exception
-  end
-
   module Kernel
+
+		# If we are not using the extension, we provide the method by aliasing to the
+		# actual #raise call.
+		if !Mulligan.using_extension?
+			alias_method :mg_raise, :raise
+			alias_method :mg_fail,  :fail
+		end
 
     # Executes the recovery.
     # This actually places the current execution point to the code in the case
@@ -48,7 +51,7 @@ END
         args   = rest unless rest.nil? || rest.empty?
         retry
       else
-        raise
+        mg_raise
       end
     end
 
@@ -61,7 +64,7 @@ END
     #         in a case statement
     def recovery(choice = nil)
       return __start_case__ if choice.nil?
-      raise "No Current Exception" if $!.nil?
+      mg_raise "No Current Exception" if $!.nil?
       $!.send(:__chosen_recovery__, choice)
     end
 
@@ -71,7 +74,7 @@ END
     end
 
     def __execute_recovery__(choice, *args)
-      raise "No Current Exception" if $!.nil?
+      mg_raise "No Current Exception" if $!.nil?
       # find the best match for the chosen recovery
       $!.__send__(:__execute_recovery__, choice, *args)
     end
