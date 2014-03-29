@@ -70,7 +70,7 @@ describe Mulligan::Kernel do
             end
           else ; mg_raise ; end
         rescue => e
-            Recovery.should_receive(:===)
+          Recovery.should_receive(:===) if Mulligan.supported?
           recovery Recovery
         end
       end
