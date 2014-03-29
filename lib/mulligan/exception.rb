@@ -32,7 +32,7 @@ module Mulligan
       # error
       return nil if choice.nil?
       __recoveries__.each do |k,v|
-        return v if v.kind_of?(choice)
+        return v if choice === v
       end
       nil
     end

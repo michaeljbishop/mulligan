@@ -61,6 +61,20 @@ describe Mulligan::Kernel do
 
     describe "when passed a class in a \'rescue\' clause" do
 
+      it 'uses === to find the recovery' do
+        begin
+          case recovery
+          when begin
+            r = Recovery.new
+            r
+            end
+          else ; mg_raise ; end
+        rescue => e
+            Recovery.should_receive(:===)
+          recovery Recovery
+        end
+      end
+
       it 'selects the first matching subclass' do
         begin
           case recovery
@@ -68,7 +82,6 @@ describe Mulligan::Kernel do
           when r = Recovery.new
           else ; mg_raise ; end
         rescue => e
-          next e unless Mulligan.supported?
           expect(recovery(Recovery)).to Mulligan.supported? ? be(i) : be_nil
         end
       end
