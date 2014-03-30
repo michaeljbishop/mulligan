@@ -3,14 +3,14 @@ module Mulligan
   
     # @return The list of recoveries available with this Exception
     def recoveries
-      v = __recoveries__.values
+      v = __recoveries__.keys
       # define an #inspect method on the array for use in Pry
       singleton = class << v ; self end
       r = __recoveries__
       singleton.send :define_method, :inspect do
-        @inspect_message ||= r.collect do |klass, instance|
-          s = "#{klass.name}\n" +
-          "-" * klass.name.length + "\n" +
+        v.collect do |instance|
+          s = "#{instance.class.name}\n" +
+          "-" * instance.class.name.length + "\n" +
           instance.summary + "\n"
           s << instance.discussion + "\n" unless instance.discussion.nil?
         end.join("\n")
@@ -20,10 +20,7 @@ module Mulligan
 
   private
     def __set_recovery__(instance)
-      # we want to make sure we have one entry per recovery class and the
-      # recoveries closest to the error take priority.
-      return if __recoveries__.has_key? instance.class
-      __recoveries__[instance.class] = instance
+      __recoveries__[instance] = caller
     end
 
     def __chosen_recovery__(choice)
@@ -32,7 +29,7 @@ module Mulligan
       # error
       return nil if choice.nil?
       __recoveries__.each do |k,v|
-        return v if choice === v
+        return k if choice === k
       end
       nil
     end
