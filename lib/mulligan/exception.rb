@@ -47,6 +47,26 @@ module Mulligan
       @recoveries ||= {} # class => instance
     end
     
+    def __find_common_frame__(other)
+      self.class.send(:__find_common_frame__, backtrace, other)
+    end
+    
+    def self.__find_common_frame__(trace_a, trace_b)
+      return -1 if trace_a.nil? or trace_b.nil?
+      # returns the line given a string from Exception#backtrace
+      def self.stack_string_without_line(s)
+        s.match(/([^:]+:)\d+/)[1]
+      end
+      # positive if a > b
+      a_offset = trace_a.length - trace_b.length
+      index = [0, a_offset].max
+      while (index < trace_a.length)
+        frame_a = stack_string_without_line(trace_a[index])
+        frame_b = stack_string_without_line(trace_b[index-a_offset])
+        return index if frame_a == frame_b
+        index += 1
+      end
+      -1
+    end
   end
 end
-

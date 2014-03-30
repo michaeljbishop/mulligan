@@ -45,5 +45,40 @@ __END
         end
       end
     end
+
+    describe "#__find_common_frame__" do
+      common = 
+      ["/irb/ruby-lex.rb:228:in `each_top_level_statement'",
+       "/irb.rb:155:in `eval_input'",
+       "/irb.rb:70:in `block in start'",
+       "/irb.rb:69:in `catch'",
+       "/irb.rb:69:in `start'"]
+
+      it "correctly finds the frame when a is a superstack of b" do
+        a = ["/irb/ruby-lex.rb:228:in `each_top_level_statement'"].concat common
+        result = subject.send(:__find_common_frame__, a, common)
+        expect(result).to eq 1
+      end
+
+      it "correctly finds the frame when b is a superstack of a" do
+        a = ["/irb/ruby-lex.rb:228:in `each_top_level_statement'"].concat common
+        result = subject.send(:__find_common_frame__, common, a)
+        expect(result).to eq 0
+      end
+
+      it "correctly finds the frame when a differs from b by the first frame" do
+        a = ["/irb/ruby-lex.rb:228:in `each_top_level_statement'"].concat common
+        b = ["/irb/ruby-lex2.rb:228:in `each_top_level_statement'"].concat common
+        result = subject.send(:__find_common_frame__, a, b)
+        expect(result).to eq 1
+      end
+
+      it "correctly finds there is no commonality" do
+        a = ["/irb/ruby-lex.rb:228:in `each_top_level_statement'"]
+        b = ["/irb/ruby-lex2.rb:228:in `each_top_level_statement'"]
+        result = subject.send(:__find_common_frame__, a, b)
+        expect(result).to eq -1
+      end
+    end
   end
 end
