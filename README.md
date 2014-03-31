@@ -284,6 +284,7 @@ No. If an exception didn't have recoveries attached when it was raised, you will
 
 ## Influences
 - [Beyond Exception Handling: Conditions and Restarts](http://www.gigamonkeys.com/book/beyond-exception-handling-conditions-and-restarts.html) -- (from [Practical Common Lisp](http://www.gigamonkeys.com/book/))
+- [Condition Handling in the Lisp Language Family](http://www.nhplace.com/kent/Papers/Condition-Handling-2001.html) (Kent M. Pitman)
 - [Things You Didn't Know About Exceptions](http://avdi.org/talks/rockymtnruby-2011/things-you-didnt-know-about-exceptions.html) (Avdi Grimm)
 - [Restartable Exceptions](http://chneukirchen.org/blog/archive/2005/03/restartable-exceptions.html) (Christian Neukirchen)
 - [Common Lisp conditions](https://www.ruby-forum.com/topic/179474) (Ruby Forum)
