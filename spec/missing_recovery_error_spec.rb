@@ -31,7 +31,7 @@ describe MissingRecoveryError do
   it "allows executing with new args" do
     result = begin
     case r = recovery
-    when IgnoringRecovery
+    when ContinuingRecovery
       r.argv
     else
       mg_raise "test"
@@ -40,7 +40,7 @@ describe MissingRecoveryError do
       begin
         recover RetryingRecovery
         rescue MissingRecoveryError => e
-          recover RetryingRecovery, IgnoringRecovery, 5, 6
+          recover RetryingRecovery, ContinuingRecovery, 5, 6
       end
       [7,8]
     end

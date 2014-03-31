@@ -16,8 +16,8 @@ module Mulligan
       Mulligan::Kernel.__send__(:__increment_automatic_continuing_scope_count__)
       yield if block_given?
     rescue => e
-      unless recovery(IgnoringRecovery).nil?
-        recover IgnoringRecovery
+      unless recovery(ContinuingRecovery).nil?
+        recover ContinuingRecovery
       end
       mg_raise
     ensure

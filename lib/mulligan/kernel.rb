@@ -76,7 +76,7 @@ END
     #   1. #signal means that the calling code can optionally handle the exception.
     #      Calling code can still handle the exception with the goal of offering
     #      additional direction to the called code but it's not required to.
-    #      It does this by ensuring the raised exception has an IgnoringRecovery
+    #      It does this by ensuring the raised exception has an ContinuingRecovery
     #      attached so higher code can invoke it.
     #   2. #signal only functions when called somewhere inside a block passed to
     #      Mulligan::with_signal_activated. Mulligan::with_signal_activated can
@@ -84,7 +84,7 @@ END
     #      It's recommended that you put Mulligan::with_signal_activated at the top
     #      of your program.
     #      When #signal is not activated but is called, it doesn't raise an
-    #      exception, but instead immediately calls the IgnoringRecovery, (whether
+    #      exception, but instead immediately calls the ContinuingRecovery, (whether
     #      explicitly attached to the exception or implicitly, through the #signal
     #      call itself).
     #
@@ -96,7 +96,7 @@ END
         Mulligan::Kernel.send(:"__last_recovery_collector__=", collector = Mulligan::Collector.new)
       end
 
-      last_ignoring_recovery = collector.send(:__recovery__, IgnoringRecovery)
+      last_ignoring_recovery = collector.send(:__recovery__, ContinuingRecovery)
       is_inside_automatic_continuing_scope = Mulligan::Kernel.send(:__is_inside_automatic_continuing_scope__)
 
         # If the collector already has an ignoring recovery...
@@ -118,7 +118,7 @@ END
         
         # We can safely raise, adding a continue recovery.
       case collector
-      when IgnoringRecovery
+      when ContinuingRecovery
         return
       else
         mg_raise *args

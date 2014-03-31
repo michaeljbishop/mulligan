@@ -1054,14 +1054,14 @@ def calling_method\
   "SUCCESS"\
 \cf4 rescue\cf2  Exception\
   puts "RESCUED"\
-  \cf5 recover\cf2  \cf6 IgnoringRecovery\cf2 \
+  \cf5 recover\cf2  \cf6 ContinuingRecovery\cf2 \
   puts "HANDLED"\
 end\
 \
 def method_that_raises\
   puts "RAISING"\
   case recovery\
-  when \cf6 IgnoringRecovery\cf2 \
+  when \cf6 ContinuingRecovery\cf2 \
     puts "IGNORING"\
   else\
     \cf7 raise\cf2  "You can ignore this"\

@@ -1,6 +1,6 @@
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'mulligan'
-require "mulligan/recovery/ignoring"
+require "mulligan/recovery/continuing"
 require "mulligan/error/missing_recovery"
 
   

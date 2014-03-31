@@ -9,11 +9,11 @@ describe Collector do
       case recovery
       when begin
         times = times + 1
-        IgnoringRecovery
+        ContinuingRecovery
       end
       else ; mg_raise ; end
     rescue => e
-      recover IgnoringRecovery
+      recover ContinuingRecovery
     end
     expect(times).to eq(1)
   end

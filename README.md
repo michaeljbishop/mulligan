@@ -39,14 +39,14 @@ def calling_method
   "SUCCESS"
 rescue Exception
   puts "RESCUED"
-  recover IgnoringRecovery
+  recover ContinuingRecovery
   puts "HANDLED"
 end
 
 def method_that_raises
   puts "RAISING"
   case recovery
-  when IgnoringRecovery
+  when ContinuingRecovery
     puts "IGNORING"
   else
     raise "You can ignore this"
@@ -101,7 +101,7 @@ You can also call `recovery(<recovery_class>)` when inside a rescue statement to
 
 ```ruby
 rescue Exception => e
-  if !recovery(IgnoringRecovery).nil?
+  if !recovery(ContinuingRecovery).nil?
     ...
   end
 ```
@@ -112,7 +112,7 @@ Inside a `rescue` clause, this invokes the recovery object. There is no return v
 
 ```ruby
 rescue Exception => e
-  recover(IgnoringRecovery)
+  recover(ContinuingRecovery)
 ```
 
 #### You can pass arguments when calling the recovery.
@@ -121,7 +121,7 @@ Here is an example of passing arguments:
 
 ```ruby
 rescue Exception => e
-  recover(IgnoringRecovery, "I'm saving you")
+  recover(ContinuingRecovery, "I'm saving you")
 ```
 
 Here is an example of retrieving them:
@@ -129,7 +129,7 @@ Here is an example of retrieving them:
 ```ruby
 begin
 case r = recovery
-when IgnoringRecovery
+when ContinuingRecovery
   puts r.argv[0]        # will output "I'm saving you"
 else
   raise
@@ -166,7 +166,7 @@ Attributes:
             how many times the code has been retried and
             perhaps limit the total number of retries.
 
-Mulligan::IgnoringRecovery
+Mulligan::ContinuingRecovery
 --------------------------
 Ignores the exception and continues execution.
 If this recovery is attached to an Exception, you may

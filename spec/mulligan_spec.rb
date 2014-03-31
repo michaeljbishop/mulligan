@@ -34,7 +34,7 @@ describe Mulligan do
       test_case = proc do
         Mulligan.with_signal_activated do
           case recovery
-          when IgnoringRecovery
+          when ContinuingRecovery
           else ; mg_raise ; end
         end
       end
@@ -49,7 +49,7 @@ describe Mulligan do
       Mulligan.with_signal_activated do
         t = Thread.start do
           case recovery
-          when IgnoringRecovery
+          when ContinuingRecovery
           else ; mg_raise ; end
           5
         end

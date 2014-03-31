@@ -1,5 +1,5 @@
 module Mulligan
-  class IgnoringRecovery < Recovery
+  class ContinuingRecovery < Recovery
     self.summary =
 <<END
 Ignores the exception and continues execution.

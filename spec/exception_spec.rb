@@ -6,7 +6,7 @@ describe Mulligan::Exception do
       begin
         case recovery
         when r = Recovery.new
-        when i = IgnoringRecovery.new
+        when i = ContinuingRecovery.new
         else ; mg_raise ; end
       rescue => e
         if Mulligan.supported?
@@ -22,7 +22,7 @@ describe Mulligan::Exception do
         begin
           case recovery
           when r = Recovery.new{|r| r.summary = "summary"}
-          when i = IgnoringRecovery.new{|i| i.summary = "summary2"}
+          when i = ContinuingRecovery.new{|i| i.summary = "summary2"}
           else ; mg_raise ; end
         rescue => e
           r.discussion = "discussion"
@@ -34,8 +34,8 @@ Mulligan::Recovery
 summary
 discussion
 
-Mulligan::IgnoringRecovery
---------------------------
+Mulligan::ContinuingRecovery
+----------------------------
 summary2
 discussion2
 __END

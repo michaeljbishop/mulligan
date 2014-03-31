@@ -7,28 +7,28 @@ describe Mulligan::Kernel do
       it 'collects recoveries by class' do
         exception = begin
           case recovery
-          when IgnoringRecovery
+          when ContinuingRecovery
           else ; mg_raise ; end
         rescue => e ; e
         end
-        expect(exception.recoveries.first.is_a? IgnoringRecovery).to eq(Mulligan.supported?)
+        expect(exception.recoveries.first.is_a? ContinuingRecovery).to eq(Mulligan.supported?)
       end
 
       it 'collects recoveries by instance' do
         exception = begin
           case recovery
-          when IgnoringRecovery.new
+          when ContinuingRecovery.new
           else ; mg_raise ; end
         rescue => e ; e
         end
-        expect(exception.recoveries.first.is_a? IgnoringRecovery).to eq(Mulligan.supported?)
+        expect(exception.recoveries.first.is_a? ContinuingRecovery).to eq(Mulligan.supported?)
       end
 
       it 'collects recoveries by class, ignoring duplicate classes' do
         exception = begin
           case recovery
-          when IgnoringRecovery
-          when IgnoringRecovery
+          when ContinuingRecovery
+          when ContinuingRecovery
           else ; mg_raise ; end
         rescue => e ; e
         end
@@ -38,8 +38,8 @@ describe Mulligan::Kernel do
       it 'collects recoveries by instance ignoring duplicate instances' do
         exception = begin
           case recovery
-          when IgnoringRecovery.new
-          when IgnoringRecovery.new
+          when ContinuingRecovery.new
+          when ContinuingRecovery.new
           else ; mg_raise ; end
         rescue => e ; e
         end
@@ -49,8 +49,8 @@ describe Mulligan::Kernel do
       it 'collects recoveries by class and instance, ignoring duplicates' do
         exception = begin
           case recovery
-          when IgnoringRecovery.new
-          when IgnoringRecovery
+          when ContinuingRecovery.new
+          when ContinuingRecovery
           else ; mg_raise ; end
         rescue => e ; e
         end
@@ -78,7 +78,7 @@ describe Mulligan::Kernel do
       it 'selects the first matching subclass' do
         begin
           case recovery
-          when i = IgnoringRecovery.new
+          when i = ContinuingRecovery.new
           when r = Recovery.new
           else ; mg_raise ; end
         rescue => e
@@ -90,10 +90,10 @@ describe Mulligan::Kernel do
         begin
           case recovery
           when r = Recovery.new
-          when i = IgnoringRecovery.new
+          when i = ContinuingRecovery.new
           else ; mg_raise ; end
         rescue => e
-          expect(recovery(IgnoringRecovery)).to Mulligan.supported? ? be(i) : be_nil
+          expect(recovery(ContinuingRecovery)).to Mulligan.supported? ? be(i) : be_nil
         end
       end
 
@@ -116,7 +116,7 @@ describe Mulligan::Kernel do
 
     it "raises RuntimeError when passed a selector and there is no current Exception" do
       expect($!).to be_nil
-      expect {recovery IgnoringRecovery}.to raise_error(RuntimeError)
+      expect {recovery ContinuingRecovery}.to raise_error(RuntimeError)
     end
   end
 
@@ -150,7 +150,7 @@ describe Mulligan::Kernel do
       it "attaches a RetryingRecovery" do
         result = begin
           case recovery
-          when IgnoringRecovery
+          when ContinuingRecovery
           else
             mg_raise
           end
@@ -167,7 +167,7 @@ describe Mulligan::Kernel do
       it "invoking the RetryingRecovery with a new choice succeeds" do
         result = begin
           case recovery
-          when IgnoringRecovery
+          when ContinuingRecovery
           else
             mg_raise
           end
@@ -176,7 +176,7 @@ describe Mulligan::Kernel do
           begin
             recover RetryingRecovery
             rescue MissingRecoveryError
-              recover RetryingRecovery, IgnoringRecovery
+              recover RetryingRecovery, ContinuingRecovery
           end
           5
         end
@@ -284,7 +284,7 @@ describe Mulligan::Kernel do
           begin
             signal
           rescue RuntimeError
-            expect(recovery(IgnoringRecovery)).to_not be_nil
+            expect(recovery(ContinuingRecovery)).to_not be_nil
           end
         end
       end
@@ -293,7 +293,7 @@ describe Mulligan::Kernel do
         Mulligan.with_signal_activated do
           result = begin
             case recovery
-            when Mulligan::IgnoringRecovery
+            when Mulligan::ContinuingRecovery
               5
             else
               signal
@@ -302,7 +302,7 @@ describe Mulligan::Kernel do
               6
             end
           rescue RuntimeError => e
-            recover IgnoringRecovery
+            recover ContinuingRecovery
           end
           expect(result).to Mulligan.supported? ? eq(5) : eq(6)
         end
@@ -317,7 +317,7 @@ describe Mulligan::Kernel do
       it "calls a pre-existing continue recovery" do
         result = begin
           case recovery
-          when Mulligan::IgnoringRecovery
+          when Mulligan::ContinuingRecovery
             5
           else
             signal
