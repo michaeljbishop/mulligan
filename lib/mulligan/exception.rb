@@ -27,11 +27,15 @@ module Mulligan
     end
 
     def __chosen_recovery__(choice)
+      Mulligan::Exception.__chosen_recovery__(__recoveries__, choice)
+    end
+
+    def self.__chosen_recovery__(r, choice)
       # Ruby's Hash has ordered keys.
       # The first keys will have the deepest continuations which are closest to the
       # error
       return nil if choice.nil?
-      __recoveries__.each do |k,v|
+      r.each do |k,v|
         return v if choice === v
       end
       nil

@@ -14,6 +14,11 @@ module Mulligan
     end
     
   private
+    def __recovery__(klass)
+      # we want to make sure we have one entry per recovery class
+      Exception.__chosen_recovery__(@recoveries, klass)
+    end
+    
     def __add_recovery__(recovery)
       # we want to make sure we have one entry per recovery class
       @recoveries[recovery.class] = recovery
