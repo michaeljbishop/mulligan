@@ -45,6 +45,21 @@ describe Mulligan do
       end
     end
 
+    it "keeps the scope even when leaving it and recovering back into it" do
+      saved_scope = 0
+      begin
+        Mulligan.with_signal_activated do
+          saved_scope = Mulligan::Kernel.send(:__automatic_continuing_scope_count__)
+          case recovery
+          when RetryingRecovery
+            expect(saved_scope).to eq(Mulligan::Kernel.send(:__automatic_continuing_scope_count__))
+          else ; mg_raise ; end
+        end
+      rescue RuntimeError => e
+        recover RetryingRecovery
+      end
+    end
+
     pending "starts a new scope when starting a thread" do
       Mulligan.with_signal_activated do
         t = Thread.start do

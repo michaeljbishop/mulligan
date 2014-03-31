@@ -39,8 +39,10 @@ module Mulligan
     def ===(other)
       return super unless Mulligan.supported?
       return super unless other.is_a?(Mulligan::Collector)
+      saved_scope = Mulligan::Kernel.send(:__automatic_continuing_scope_count__)
       callcc do |c|
         @continuation = proc do |*args|
+          Mulligan::Kernel.send(:"__automatic_continuing_scope_count__=", saved_scope)
           other.__send__(:__set_args__, args) 
           c.call(true)
         end
