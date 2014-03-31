@@ -279,7 +279,7 @@ describe Mulligan::Kernel do
         end
       end
     
-      it "raises a continue recovery" do
+      it "attaches a continue recovery" do
         Mulligan.with_signal_activated do
           begin
             signal
@@ -309,7 +309,7 @@ describe Mulligan::Kernel do
       end
     end
     
-    context "when NOT inside an #with_signal_activated block" do
+    context "when NOT inside a #with_signal_activated block" do
       it "doesn't raise" do
         expect{ signal }.to_not raise_error
       end
