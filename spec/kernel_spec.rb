@@ -151,10 +151,10 @@ describe Mulligan::Kernel do
         result = begin
           case recovery
           when IgnoringRecovery
-            5
           else
             mg_raise
           end
+          5
         rescue => e
           begin
             recover Recovery
@@ -168,10 +168,10 @@ describe Mulligan::Kernel do
         result = begin
           case recovery
           when IgnoringRecovery
-            5
           else
             mg_raise
           end
+          5
         rescue => e
           begin
             recover RetryingRecovery
@@ -263,6 +263,70 @@ describe Mulligan::Kernel do
             expect(e.message).to eq("test")
           end
         end
+      end
+    end
+  end
+
+  describe "#signal" do
+    context "when inside an #with_signal_activated block" do
+      it "is continued" do
+        Mulligan.with_signal_activated do
+          result = begin
+            signal
+            6
+          end
+          expect(result).to eq(6)
+        end
+      end
+    
+      it "raises a continue recovery" do
+        Mulligan.with_signal_activated do
+          begin
+            signal
+          rescue RuntimeError
+            expect(recovery(IgnoringRecovery)).to_not be_nil
+          end
+        end
+      end
+    
+      it "does not override an existing continue recovery" do
+        Mulligan.with_signal_activated do
+          result = begin
+            case recovery
+            when Mulligan::IgnoringRecovery
+              5
+            else
+              signal
+              # This is not something that should be written normally, but for this
+              # test we want to differentiate results
+              6
+            end
+          rescue RuntimeError => e
+            recover IgnoringRecovery
+          end
+          expect(result).to Mulligan.supported? ? eq(5) : eq(6)
+        end
+      end
+    end
+    
+    context "when NOT inside an #with_signal_activated block" do
+      it "doesn't raise" do
+        expect{ signal }.to_not raise_error
+      end
+
+      it "calls a pre-existing continue recovery" do
+        result = begin
+          case recovery
+          when Mulligan::IgnoringRecovery
+            5
+          else
+            signal
+            # This is not something that should be written normally, but for this
+            # test we want to differentiate results
+            6
+          end
+        end
+          expect(result).to Mulligan.supported? ? eq(5) : eq(6)
       end
     end
   end
