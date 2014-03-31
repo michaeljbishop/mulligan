@@ -15,12 +15,12 @@ module Mulligan
 
   module Kernel
 
-		# If we are not using the extension, we provide the method by aliasing to the
-		# actual #raise call.
-		if !Mulligan.using_extension?
-			alias_method :mg_raise, :raise
-			alias_method :mg_fail,  :fail
-		end
+    # If we are not using the extension, we provide the method by aliasing to the
+    # actual #raise call.
+    if !Mulligan.using_extension?
+      alias_method :mg_raise, :raise
+      alias_method :mg_fail,  :fail
+    end
 
     # Executes the recovery.
     # This actually places the current execution point to the code in the case
@@ -31,7 +31,7 @@ module Mulligan
     # @raise MissingRecoveryError if Mulligan is supported AND the choice cannot be
     #                             found. Attached is a RetryingRecovery.
     def recover(choice, *args)
-      __execute_recovery__(choice, *args)
+      Mulligan::Kernel.__send__(:__execute_recovery__, choice, *args)
     rescue MissingRecoveryError
       case r = recovery
       # use ||= because we only want to make one of these, even if we retry and
@@ -63,27 +63,57 @@ END
     # @return Either the recovery instance or a 'collector' that builds recoveries
     #         in a case statement
     def recovery(choice = nil)
-      return __start_case__ if choice.nil?
+      return Mulligan::Kernel.__send__(:__start_case__) if choice.nil?
       mg_raise "No Current Exception" if $!.nil?
       $!.send(:__chosen_recovery__, choice)
     end
 
   private
-    def __start_case__
-      Thread.current[:__last_recovery_collector] = Mulligan::Collector.new
-    end
+     class << self
+       def __last_recovery_collector__
+         Thread.current[:__last_recovery_collector]
+       end
 
-    def __execute_recovery__(choice, *args)
-      mg_raise "No Current Exception" if $!.nil?
-      # find the best match for the chosen recovery
-      $!.__send__(:__execute_recovery__, choice, *args)
-    end
+       def __last_recovery_collector__=(collector)
+         Thread.current[:__last_recovery_collector] = collector
+       end
 
-    def self.__process_exception_from_raise__(e)
-      matcher = Thread.current[:__last_recovery_collector]
-      return if matcher.nil?
-      matcher.__send__(:__add_recoveries_to_exception__, e)
-      Thread.current[:__last_recovery_collector] = nil
+       def __automatic_continuing_scope_count__
+         Thread.current[:__automatic_continuing_scope_count__] ||= 0
+       end
+
+       def __automatic_continuing_scope_count__=(value)
+         Thread.current[:__automatic_continuing_scope_count__] = value
+       end
+
+       def __is_inside_automatic_continuing_scope__
+         self.__automatic_continuing_scope_count__ > 0
+       end
+
+       def __increment_automatic_continuing_scope_count__
+         self.__automatic_continuing_scope_count__ += 1
+       end
+
+       def __decrement_automatic_continuing_scope_count__
+         self.__automatic_continuing_scope_count__ -= 1
+       end
+
+      def __start_case__
+        self.__last_recovery_collector__ = Mulligan::Collector.new
+      end
+
+      def __execute_recovery__(choice, *args)
+        mg_raise "No Current Exception" if $!.nil?
+        # find the best match for the chosen recovery
+        $!.__send__(:__execute_recovery__, choice, *args)
+      end
+
+      def __process_exception_from_raise__(e)
+        matcher = self.__last_recovery_collector__
+        return if matcher.nil?
+        matcher.__send__(:__add_recoveries_to_exception__, e)
+        self.__last_recovery_collector__ = nil
+      end
     end
   end
 end
